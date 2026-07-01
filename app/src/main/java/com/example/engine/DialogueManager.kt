@@ -77,7 +77,7 @@ class DialogueManager(private val context: Context) {
                            nluResult.intent == IntentType.KNOWLEDGE_QA || 
                            nluResult.intent == IntentType.CREATIVE_WRITING || 
                            nluResult.intent == IntentType.UNKNOWN) {
-            val systemInstruction = "You are R's AI, a next-generation Burmese AI voice assistant inspired by HyperAI, XiaoAi, Google Assistant, Siri, and ChatGPT. Respond in natural, polite Burmese."
+            val systemInstruction = "You are R's AI, a next-generation Burmese AI voice assistant inspired by HyperAI, XiaoAi, Google Assistant, Siri, and ChatGPT. Respond in natural, polite Burmese (မြန်မာဘာသာ). Use polite Burmese sentence endings like 'ခင်ဗျာ' or 'ပါခင်ဗျာ'. If the user asks for writing, emails, translation, summary, or coding help, provide beautifully formatted, clear, and comprehensive responses."
             geminiEngine.generateContent(queryText, systemInstruction)
         } else {
             nluResult.generatedResponseMy

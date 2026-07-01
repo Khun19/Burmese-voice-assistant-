@@ -109,13 +109,13 @@ class NLUEngine {
                     IntentType.MUTE_VOLUME -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အသံပိတ်ပေးလိုက်ပါပြီခင်ဗျာ။"
                     IntentType.TOGGLE_FLASHLIGHT -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဓာတ်မီးကို ပြောင်းလဲပေးလိုက်ပါပြီခင်ဗျာ။"
                     IntentType.TOGGLE_DARK_MODE -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အမှောင်စနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.TOGGLE_POWER_SAVING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပါဝါချွေတာရေးစနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.TOGGLE_DND -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အန���ောင့်အယှက်မပေးရစနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.TAKE_SCREENSHOT -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဖုန်းမျက်နှာပြင်ကိုတွေ့မြင်ကူးယူပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.CHECK_BATTERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဘက်ထရီအခြေအနေကို စစ်ဆေးပေးလိုက်ပါပြီခင်ဗျာ။"
-                    IntentType.CHECK_DIAGNOSTICS -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း သိုလှောင်မှုနှင့်သတ်မှတ်မှုတစ်ခြိုးကိုစစ်ဆေးပေးလိုက်ပါပြီခင်ဗျာ။"
-                    IntentType.OPEN_GALLERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပြခန်းကို ဖွင့်လှစ်ပေးလိုက်ပါပြီခင်ဗျာ။"
-                    IntentType.START_SCREEN_RECORDING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း မျက်နှာပြင်ဗီဒီယိုကွင်းဆင်းပေးလိုက်ပါပြီခင်ဗျာ။"
+                    IntentType.TOGGLE_POWER_SAVING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပါဝါချွေတာရေးစနစ်ကို ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.TOGGLE_DND -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အနှောင့်အယှက်မပေးရစနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.TAKE_SCREENSHOT -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဖုန်းမျက်နှာပြင်ကို ဓာတ်ပုံရိုက်ကူးလိုက်ပါပြီခင်ဗျာ။"
+                    IntentType.CHECK_BATTERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဘက်ထရီအခြေအနေကို စစ်ဆေးပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.CHECK_DIAGNOSTICS -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း သိုလှောင်မှုစစ်ဆေးပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.OPEN_GALLERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပြခန်းကို ဖွင့်လှစ်ပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.START_SCREEN_RECORDING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း မျက်နှာပြင်ဗီဒီယိုမှတ်တမ်းတင်ခြင်းကို စတင်လိုက်ပါပြီခင်ဗျာ။"
                     else -> "စိတ်ကြိုက်အမိန့်ပေးချက် '${phrase}' အရ ဆောင်ရွက်ပေးနေပါသည်ခင်ဗျာ။"
                 }
                 return NLUResult(
@@ -143,7 +143,7 @@ class NLUEngine {
                 intent = IntentType.TOGGLE_WIFI,
                 slots = mapOf("state" to if (isOn) "on" else "off"),
                 confidence = 0.95f,
-                generatedResponseMy = if (isOn) "ဝိုင်ဖိုင် (Wi-Fi) ဆက်တင်များကို ဖွင့်ပေးနေပါသည်ခင်ဗျာ။" else "ဝိုင်ဖိုင် (Wi-Fi) ဆက်တင်များကို ပိတ်ပေးနေပါသည်ခင်ဗျာ။"
+                generatedResponseMy = if (isOn) "ဝိုင်ဖိုင် (Wi-Fi) ဆက်တင်များကို ဖွင့်ပေးနေပါသည်ခင်ဗျာ။" else "ဝိုင်ဖိုင် (Wi-Fi) ဆက်တင်များကို ပိတ်ရန် ဆက်တင်စာမျက်နှာကို ဖွင့်ပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
@@ -154,7 +154,7 @@ class NLUEngine {
                 intent = IntentType.TOGGLE_BLUETOOTH,
                 slots = mapOf("state" to if (isOn) "on" else "off"),
                 confidence = 0.94f,
-                generatedResponseMy = "ဘလူးတုသ် (Bluetooth) စနစ်ကို လုပ်ဆောင်နိုင်ရန် ချိတ်ဆက်မှု ဆက်တင်များကို ဖွင့်ပေးနေပါသည်ခင်ဗျာ။"
+                generatedResponseMy = "ဘလူးတုသ် (Bluetooth) စနစ်ကို လုပ်ဆောင်နိုင်ရန် ချိတ်ဆက်မှု ဆက်တင်ကို ဖွင့်ပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
@@ -169,7 +169,7 @@ class NLUEngine {
                         generatedResponseMy = "ဖုန်းအသံပမာဏကို လျှော့ချပေးလိုက်ပါပြီခင်ဗျာ။"
                     )
                 }
-                trimmed.contains("ချဲ့") || trimmed.contains("ကျယ်") || trimmed.contains("မြှင့်") || trimmed.contains("ဖွင့်") || trimmed.contains("up") || trimmed.contains("higher") || trimmed.contains("increase") -> {
+                trimmed.contains("ချဲ့") || trimmed.contains("ကျယ်") || trimmed.contains("မြှင့်") || trimmed.contains("ဖွင့်") || trimmed.contains("up") || trimmed.contains("raise") || trimmed.contains("increase") -> {
                     NLUResult(
                         intent = IntentType.VOLUME_UP,
                         slots = emptyMap(),
@@ -182,7 +182,7 @@ class NLUEngine {
                         intent = IntentType.MUTE_VOLUME,
                         slots = emptyMap(),
                         confidence = 0.98f,
-                        generatedResponseMy = "ဖုန်းအသံကို ပိတ်ပြီး ငြိမ်သက်စေလိုက်ပါပြီခင်ဗျာ။ (Silent Mode အတွက်)"
+                        generatedResponseMy = "ဖုန်းအသံကို ပိတ်ပြီး ငြိမ်သက်စေလိုက်ပါပြီခင်ဗျာ။ (Silent Mode)"
                     )
                 }
                 else -> NLUResult(
@@ -223,7 +223,7 @@ class NLUEngine {
                 intent = IntentType.MAKE_CALL,
                 slots = mapOf("phone_number" to number),
                 confidence = 0.96f,
-                generatedResponseMy = "ဖုန်းနံပါတ် $number သို့ ဖုန်းခေါ်ဆိုရန် ဖုန်းခေါ်ဆိုမှုမျက်နှာပြင်ကို ဖွင့်လှစ်ပေးနေပါသည်ခင်ဗျာ။"
+                generatedResponseMy = "ဖုန်းနံပါတ် $number သို့ ဖုန်းခေါ်ဆိုရန် ဖုန်းခေါ်ဆိုမှုမျက်နှာပြင်ကို ဖွင့်ပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
@@ -254,7 +254,7 @@ class NLUEngine {
                 intent = IntentType.ADD_REMINDER,
                 slots = mapOf("detail" to detail),
                 confidence = 0.92f,
-                generatedResponseMy = "အော့ဖ်လိုင်း သတိပေးချက် စနစ်တွင် \"$detail\" ကို သတိပေးချက်အဖြစ် သိမ်းဆည်းပေးနေပါသည်ခင်ဗျာ။"
+                generatedResponseMy = "အော့ဖ်လိုင်း သတိပေးချက် စနစ်တွင် \"$detail\" ကို သတိပေးချက်အဖြစ် သတ်မှတ်လိုက်ပါပြီခင်ဗျာ။"
             )
         }
 
@@ -282,12 +282,12 @@ class NLUEngine {
         }
 
         // 12. Knowledge QA
-        if (trimmed.contains("ဘာလဲ") || trimmed.contains("ဘယ်သူလဲ") || trimmed.contains("အကြောင်း") || trimmed.contains("သမိုင်း") || trimmed.contains("ရှေးဟောင်း")) {
+        if (trimmed.contains("ဘာလဲ") || trimmed.contains("ဘယ်သူလဲ") || trimmed.contains("အကြောင်း") || trimmed.contains("သမိုင်း") || trimmed.contains("qa")) {
             val answerMy = when {
-                trimmed.contains("မြန်မာ") -> "မြန်မာနိုင်ငံသည် အရှေ့တောင်အာရှတွင် တည်ရှိပြီး ယဉ်ကျေးမှုအခြင်းအရာအလွန်စုံလင်သည့်နိုင်ငံတစ်ခုဖြစ်ပါသည်။"
-                trimmed.contains("ပုဂံ") -> "ပုဂံသည် မြန်မာနိုင်ငံ၏ ရှေးဟောင်းသမိုင်းဝင် မြို့တစ်မြို့ဖြစ်ပြီး နက်နဲသော ယဉ်ကျေးမှုအမွေအလဆ ရှိသည့်နေရာတစ်ခုဖြစ်ပါသည်။"
-                trimmed.contains("ရန်ကုန်") -> "ရန်ကုန်မြို့သည် မြန်မာနိုင်ငံ၏ စီးပွားရေးအချက်အချာဝါဒ ထိတွေ့နေသည့်မြို့တစ်မြို့ဖြစ်ပါသည်။"
-                else -> "မြန်မာ့သမိုင်းနှင့် အထွေထွေဗဟုသုတများကို အော့ဖ်လိုင်းဗဟုသုတအခြေအနေမှ ဆွဲထုတ်ပေးနေပါသည်ခင်ဗျာ။"
+                trimmed.contains("မြန်မာ") -> "မြန်မာနိုင်ငံသည် အရှေ့တောင်အာရှတွင် တည်ရှိပြီး ယဉ်ကျေးမှုအမွေအနှစ်များစွာရှိသော နိုင်ငံဖြစ်ပါသည်။"
+                trimmed.contains("ပုဂံ") -> "ပုဂံသည် မြန်မာနိုင်ငံ၏ ရှေးဟောင်းသမိုင်းဝင် မြို့တော်တစ်ခုဖြစ်ပြီး စေတီပုထိုးထောင်ပေါင်းများစွာ တည်ရှိရာ အရပ်ဖြစ်ပါသည်။"
+                trimmed.contains("ရန်ကုန်") -> "ရန်ကုန်မြို့သည် မြန်မာနိုင်ငံ၏ စီးပွားရေးအချက်အချာ အကျဆုံးနှင့် အကြီးဆုံး မြို့ကြီးတစ်မြို့ ဖြစ်ပါသည်။"
+                else -> "မြန်မာ့သမိုင်းနှင့် အထွေထွေဗဟုသုတများကို အော့ဖ်လိုင်းဗဟုသုတစနစ်မှ ရှာဖွေတွေ့ရှိချက်အရ ရှင်းလင်းတင်ပြပေးနေခြင်း ဖြစ်ပါသည်။"
             }
             return NLUResult(
                 intent = IntentType.KNOWLEDGE_QA,
@@ -299,12 +299,12 @@ class NLUEngine {
 
         // 13. Creative Writing
         if (trimmed.contains("ကဗျာ") || trimmed.contains("ပုံပြင်") || trimmed.contains("စာရေး")) {
-            val poem = "ပန်းကလေးများ လန်းဆန်းစေ၊ လေပြည်ညှင်းလည်း တိုက်ခတ်စေ။ မြန်မာပြည်သည် ရေပြည်ကျွန်း ရီမုံလည်း ရှုံးပြီဝဦး။"
+            val poem = "ပန်းကလေးများ လန်းဆန်းစေ၊ လေပြည်ညှင်းလည်း တိုက်ခတ်စေ။ မြန်မာပြည်ဝယ် အစဉ်အေးမြ၊ သာယာဝပြော ငြိမ်းချမ်းကြ။"
             return NLUResult(
                 intent = IntentType.CREATIVE_WRITING,
                 slots = emptyMap(),
                 confidence = 0.90f,
-                generatedResponseMy = "မြန်မာစာပေ အော့ဖ်လိုင်းမော်ဒယ်မှ ထုတ်လုပ်ပေးသော ကဗျာတို့ကို ကြားနုံးပေးနေပါသည်ခင်ဗျာ။ $poem"
+                generatedResponseMy = "မြန်မာစာပေ အော့ဖ်လိုင်းမော်ဒယ်မှ ထုတ်လုပ်ပေးသော ကဗျာတိုလေး ဖြစ်ပါသည်ခင်ဗျာ -\n\n\"$poem\""
             )
         }
 
@@ -346,95 +346,110 @@ class NLUEngine {
             )
         }
 
-        if (trimmed.contains("အမှောင်") || trimmed.contains("dark") || trimmed.contains("mode")) {
+        if (trimmed.contains("သိုလှောင်မှု") || trimmed.contains("storage") || trimmed.contains("ram") || trimmed.contains("diagnostics")) {
+            return NLUResult(
+                intent = IntentType.CHECK_DIAGNOSTICS,
+                slots = emptyMap(),
+                confidence = 0.96f,
+                generatedResponseMy = "စနစ်စွမ်းဆောင်ရည်နှင့် သိုလှောင်မှုများကို စစ်ဆေးပေးနေပါသည်ခင်ဗျာ။"
+            )
+        }
+
+        if (trimmed.contains("အမှောင်") || trimmed.contains("dark mode") || trimmed.contains("darkmode")) {
             val isOn = !trimmed.contains("ပိတ်")
             return NLUResult(
                 intent = IntentType.TOGGLE_DARK_MODE,
                 slots = mapOf("state" to if (isOn) "on" else "off"),
-                confidence = 0.96f,
-                generatedResponseMy = if (isOn) "အမှောင်စနစ် (Dark Mode) ကို ဖွင့်လိုက်ပါပြီခင်ဗျာ။" else "အမှောင်စနစ်ကို ပိတ်လိုက်ပါပြီခင်ဗျာ။"
+                confidence = 0.95f,
+                generatedResponseMy = if (isOn) "အမှောင်စနစ် (Dark Mode) ဆက်တင်သို့ ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။" else "လင်းထိန်သောစနစ် (Light Mode) ဆက်တင်သို့ ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("ပါဝါချွေတာ") || trimmed.contains("power saving")) {
+        if (trimmed.contains("စွမ်းအင်") || trimmed.contains("power saving") || trimmed.contains("powersaving")) {
             val isOn = !trimmed.contains("ပိတ်")
             return NLUResult(
                 intent = IntentType.TOGGLE_POWER_SAVING,
                 slots = mapOf("state" to if (isOn) "on" else "off"),
                 confidence = 0.95f,
-                generatedResponseMy = if (isOn) "ပါဝါချွေတာရေးစနစ်ကို ဖွင့်လိုက်ပါပြီခင်ဗျာ။" else "ပါဝါချွေတာရေးစနစ်ကို ပိတ်လိုက်ပါပြီခင်ဗျာ။"
+                generatedResponseMy = "ပါဝါချွေတာရေးမုဒ် (Power Saving) ဆက်တင်များသို့ ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("အနှောင့်") || trimmed.contains("dnd") || trimmed.contains("do not disturb")) {
+        if (trimmed.contains("တိတ်ဆိတ်") || trimmed.contains("do not disturb") || trimmed.contains("dnd") || trimmed.contains("အနှောင့်အယှက်")) {
             val isOn = !trimmed.contains("ပိတ်")
             return NLUResult(
                 intent = IntentType.TOGGLE_DND,
                 slots = mapOf("state" to if (isOn) "on" else "off"),
-                confidence = 0.94f,
-                generatedResponseMy = if (isOn) "အနှောင့်အယှက်မပေးရစနစ်ကို ဖွင့်လိုက်ပါပြီခင်ဗျာ။" else "အနှောင့်အယှက်မပေးရစနစ်ကို ပိတ်လိုက်ပါပြီခင်ဗျာ။"
+                confidence = 0.96f,
+                generatedResponseMy = if (isOn) "အနှောင့်အယှက်မပေးရစနစ် (Do Not Disturb) ကို ဖွင့်လှစ်လိုက်ပါပြီခင်ဗျာ။" else "အနှောင့်အယှက်မပေးရစနစ် (Do Not Disturb) ကို ပိတ်လိုက်ပါပြီခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("လွှာဒါ") || trimmed.contains("brightness") || trimmed.contains("အလင်း")) {
-            val percent = parseNumberFromQuery(query) ?: 50
+        if (trimmed.contains("အလင်း") || trimmed.contains("brightness") || trimmed.contains("backlight") || trimmed.contains("စကရင်လင်း")) {
+            val percent = parseNumberFromQuery(trimmed) ?: 50
             return NLUResult(
                 intent = IntentType.SET_BRIGHTNESS,
                 slots = mapOf("percent" to percent.toString()),
-                confidence = 0.93f,
-                generatedResponseMy = "မျက်နှာပြင်အလင်းအမှောင်ကို $percent% အတိုင်း ညှိနှိုင်းပေးလိုက်ပါပြီခင်ဗျာ။"
+                confidence = 0.98f,
+                generatedResponseMy = "မျက်နှာပြင် အလင်းအမှောင်ကို $percent% သို့ ညှိနှိုင်းပြောင်းလဲပေးလိုက်ပါပြီခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("ကွင်းဆင်း") || trimmed.contains("screenshot")) {
+        if (trimmed.contains("စကရင်ရှော့") || trimmed.contains("screenshot")) {
             return NLUResult(
                 intent = IntentType.TAKE_SCREENSHOT,
                 slots = emptyMap(),
-                confidence = 0.97f,
-                generatedResponseMy = "မျက်နှာပြင်၏ ပုံစံကို ကွင်းဆင်းကူးယူပေးလိုက်ပါပြီခင်ဗျာ။"
+                confidence = 0.98f,
+                generatedResponseMy = "မျက်နှာပြင်ကို ဓာတ်ပုံရိုက်ကူး (Screenshot) ယူလိုက်ပါပြီခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("ရိုက်ကူးစု") || trimmed.contains("screen recording") || trimmed.contains("record")) {
+        if (trimmed.contains("စကရင်ဗီဒီယို") || trimmed.contains("screen recording") || trimmed.contains("recording")) {
             return NLUResult(
                 intent = IntentType.START_SCREEN_RECORDING,
                 slots = emptyMap(),
-                confidence = 0.96f,
-                generatedResponseMy = "မျက်နှာပြင် ဗီဒီယိုကွင်းဆင်းစတင်ပေးလိုက်ပါပြီခင်ဗျာ။"
+                confidence = 0.95f,
+                generatedResponseMy = "မျက်နှာပြင်ဗီဒီယိုမှတ်တမ်းတင်ခြင်း (Screen Recording) စတင်လိုက်ပါပြီခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("ပြခန်း") || trimmed.contains("gallery")) {
+        if (trimmed.contains("ပြခန်း") || trimmed.contains("gallery") || trimmed.contains("ပုံဖွင့်")) {
             return NLUResult(
                 intent = IntentType.OPEN_GALLERY,
                 slots = emptyMap(),
-                confidence = 0.96f,
-                generatedResponseMy = "ဖုန်းထဲရှိ ပြခန်း (Gallery) ကို ဖွင့်လှစ်ပေးလိုက်ပါပြီခင်ဗျာ။"
+                confidence = 0.94f,
+                generatedResponseMy = "ဖုန်း၏ ဓာတ်ပုံပြခန်း (Gallery) ကို ဖွင့်လှစ်ပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("စာတိုက်") || trimmed.contains("sms") || trimmed.contains("text")) {
-            val phoneRegex = "\\d+".toRegex()
-            val number = phoneRegex.find(trimmed)?.value ?: "09123456789"
+        if (trimmed.contains("မက်ဆေ့ခ်ျ") || trimmed.contains("sms") || trimmed.contains("စာပို့")) {
             return NLUResult(
                 intent = IntentType.SEND_SMS,
-                slots = mapOf("phone" to number, "message" to "မြန်မာ စာတိုက် မက်ဆေ့ခ်"),
-                confidence = 0.92f,
-                generatedResponseMy = "ဖုန်းနံပါတ် $number သို့ စာတိုက်မက်ဆေ့ခ် ရေးမှတ်နေရန် စာတိုက် တည်းဖြတ်ကန့်သတ်ခန်းကို ဖွင့်လှစ်ပေးလိုက်ပါပြီခင်ဗျာ။"
+                slots = mapOf("phone" to "09123456789", "message" to "မင်္ဂလာပါ R\'s AI မှ စာတိုပေးပို့ခြင်းဖြစ်ပါသည်။"),
+                confidence = 0.95f,
+                generatedResponseMy = "မက်ဆေ့ခ်ျ (SMS) ပေးပို့ရန် စာမျက်နှာကို ဖော်ပြပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
-        // Default: Unknown intent
+        // 15. Default Conversation
+        val genericReplies = listOf(
+            "မင်္ဂလာပါခင်ဗျာ။ ကျွန်တော်ကတော့ အော့ဖ်လိုင်း မြန်မာ Voice Assistant ဖြစ်ပါတယ်။ ဘာများ ကူညီပေးရမလဲခင်ဗျာ။",
+            "ဟုတ်ကဲ့ပါခင်ဗျာ၊ ကျွန်တော် အမြဲတမ်း အဆင်သင့်ရှိနေပါတယ်။ မေးခွန်းများ မေးမြန်းနိုင်ပါတယ်ခင်ဗျာ။",
+            "နေကောင်းပါတယ်ခင်ဗျာ။ လူကြီးမင်းလည်း ကိုယ်စိတ်နှစ်ဖြာ ကျန်းမာရွှင်လန်းပါစေကြောင်း ဆုတောင်းပေးအပ်ပါတယ်ခင်ဗျာ။"
+        )
+        val reply = if (trimmed.contains("မင်္ဂလာ") || trimmed.contains("ဟယ်လို") || trimmed.contains("hello")) {
+            genericReplies[0]
+        } else if (trimmed.contains("နေကောင်း")) {
+            genericReplies[2]
+        } else {
+            genericReplies[1]
+        }
+
         return NLUResult(
-            intent = IntentType.UNKNOWN,
+            intent = IntentType.CONVERSATION,
             slots = emptyMap(),
-            confidence = 0.50f,
-            generatedResponseMy = "မြန်မာ အမိန့်ချက်အဖြစ် နားလည်မရှိပါ။ ကျေးဇူးပြု၍ ထပ်မံရှင်းလင်းပြီး ပြန်လည်ဆိုပြ ပါ။"
+            confidence = 0.85f,
+            generatedResponseMy = reply
         )
     }
-}
-
-enum class VoiceProfile {
-    INDOOR,
-    OUTDOOR
 }
