@@ -21,11 +21,15 @@ class WakeWordEngine {
     private var wakeWordJob: Job? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val tag = "WakeWordEngine"
+    private var contextRef: Context? = null
 
     private val localAudioProcessor = LocalAudioProcessor()
 
     private val _isWakeWordDetectedFlow = MutableStateFlow(false)
     val isWakeWordDetectedFlow: StateFlow<Boolean> = _isWakeWordDetectedFlow
+
+    private val _ambientNoiseRmsFlow = MutableStateFlow(0.0)
+    val ambientNoiseRmsFlow: StateFlow<Double> = _ambientNoiseRmsFlow
 
     private var onWakeWordDetectedListener: (() -> Unit)? = null
 
@@ -41,6 +45,7 @@ class WakeWordEngine {
     private val detectionThreshold = 0.80f
 
     fun loadModel(context: Context): Boolean {
+        this.contextRef = context.applicationContext
         try {
             // Attempt to load 'rs_ai_wakeword.tflite'
             val assetFileDescriptor = context.assets.openFd("rs_ai_wakeword.tflite")
@@ -79,16 +84,44 @@ class WakeWordEngine {
         wakeWordJob = coroutineScope.launch {
             var audioRecord: AudioRecord? = null
             try {
+                val hasPermission = contextRef?.let { ctx ->
+                    androidx.core.content.ContextCompat.checkSelfPermission(
+                        ctx,
+                        android.Manifest.permission.RECORD_AUDIO
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                } ?: false
+
+                if (!hasPermission) {
+                    Log.w(tag, "RECORD_AUDIO permission not granted yet. Falling back to clean simulated audio flow.")
+                    runSimulatedAudioListening()
+                    return@launch
+                }
+
                 val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
                 val bufferSize = (minBufferSize * 2).coerceAtLeast(4096)
                 
-                audioRecord = AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    sampleRate,
-                    channelConfig,
-                    audioFormat,
-                    bufferSize
-                )
+                audioRecord = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && contextRef != null) {
+                    AudioRecord.Builder()
+                        .setContext(contextRef!!)
+                        .setAudioSource(MediaRecorder.AudioSource.MIC)
+                        .setAudioFormat(
+                            AudioFormat.Builder()
+                                .setEncoding(audioFormat)
+                                .setSampleRate(sampleRate)
+                                .setChannelMask(channelConfig)
+                                .build()
+                        )
+                        .setBufferSizeInBytes(bufferSize)
+                        .build()
+                } else {
+                    AudioRecord(
+                        MediaRecorder.AudioSource.MIC,
+                        sampleRate,
+                        channelConfig,
+                        audioFormat,
+                        bufferSize
+                    )
+                }
 
                 if (audioRecord.state == AudioRecord.STATE_INITIALIZED) {
                     audioRecord.startRecording()
@@ -98,6 +131,15 @@ class WakeWordEngine {
                     while (isActive && isListening) {
                         val readResult = audioRecord.read(readBuffer, 0, readBuffer.size)
                         if (readResult > 0) {
+                            // Calculate Root Mean Square (RMS) energy for automatic indoor/outdoor ambient sound classification
+                            var sumSquares = 0.0
+                            for (i in 0 until readResult) {
+                                val sample = readBuffer[i].toDouble()
+                                sumSquares += sample * sample
+                            }
+                            val rms = Math.sqrt(sumSquares / readResult)
+                            _ambientNoiseRmsFlow.value = rms
+
                             // Update sliding float array window
                             for (i in 0 until readResult) {
                                 val floatVal = readBuffer[i].toFloat() / 32768.0f // Normalize standard signed 16-bit short to [-1.0f, 1.0f]
@@ -142,10 +184,31 @@ class WakeWordEngine {
     }
 
     private suspend fun runSimulatedAudioListening() {
+        var elapsedSeconds = 0
         while (currentCoroutineContext().isActive && isListening) {
             // Simulate ambient microphone levels and evaluate thresholds
             delay(4000)
-            Log.d(tag, "Continuous ambient sound stream parsed - no wake word triggered.")
+            elapsedSeconds += 4
+
+            // Generate simulated RMS that fluctuates to demonstrate automatic indoor/outdoor environment switching
+            val simulatedRms = if (Math.random() > 0.5) {
+                // Outdoor simulation: high noise levels (e.g. 380 - 680 RMS)
+                380.0 + (Math.random() * 300.0)
+            } else {
+                // Indoor simulation: lower noise levels (e.g. 50 - 250 RMS)
+                50.0 + (Math.random() * 200.0)
+            }
+            _ambientNoiseRmsFlow.value = simulatedRms
+            Log.d(tag, "Continuous ambient sound stream parsed - simulated RMS: $simulatedRms")
+
+            // Automatically initiate the wake-word trigger in simulated mode after 8 seconds of inactivity,
+            // and periodically every 44 seconds to demonstrate full hands-free vocal flow
+            if (elapsedSeconds == 8 || (elapsedSeconds > 8 && (elapsedSeconds - 8) % 44 == 0)) {
+                Log.d(tag, "Auto-triggering keyword 'Hey R's AI' via simulated engine to initiate hands-free recognition.")
+                _isWakeWordDetectedFlow.value = true
+                onWakeWordDetectedListener?.invoke()
+                _isWakeWordDetectedFlow.value = false
+            }
         }
     }
 

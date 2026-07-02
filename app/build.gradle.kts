@@ -47,9 +47,7 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      // Disabled explicit debug signingConfig for CI environments where debug.keystore is not committed.
-      // Remove or re-enable only if you provide a debug.keystore in the repository or via CI secrets.
-      // signingConfig = signingConfigs.getByName("debugConfig")
+      signingConfig = signingConfigs.getByName("debugConfig")
     }
   }
   compileOptions {

@@ -3,6 +3,7 @@ package com.example.engine
 import android.content.Context
 import android.util.Log
 import com.example.util.SystemController
+import org.json.JSONObject
 
 data class ProcessResult(
     val queryText: String,
@@ -66,21 +67,78 @@ class DialogueManager(private val context: Context) {
     ) {
         Log.d(tag, "DialogueManager processing text command: $queryText")
         
-        // Step 1: NLU Intent Classification & Slot Extraction
-        val nluResult = nluEngine.analyzeSentence(queryText, customMappings)
+        var nluResult: NLUResult? = null
+        var actionDetails = ""
+        var responseMy = ""
         
-        // Step 2: Execute corresponding local Android device action
-        val actionDetails = executeSystemAction(nluResult.intent, nluResult.slots)
+        // 1. Attempt online dynamic Gemini-powered NLU for free-form spoken Burmese commands
+        val geminiClassifiedJson = geminiEngine.classifyIntent(queryText)
+        if (geminiClassifiedJson != null) {
+            try {
+                val jsonObj = JSONObject(geminiClassifiedJson)
+                val intentStr = jsonObj.optString("intent", "UNKNOWN")
+                val slotsJson = jsonObj.optJSONObject("slots")
+                val extractedSlots = mutableMapOf<String, String>()
+                slotsJson?.keys()?.forEach { key ->
+                    extractedSlots[key] = slotsJson.optString(key)
+                }
+                responseMy = jsonObj.optString("responseTextMy", "")
+                
+                val matchedIntent = try {
+                    IntentType.valueOf(intentStr)
+                } catch (e: Exception) {
+                    IntentType.UNKNOWN
+                }
+                
+                // Execute matching local device action
+                actionDetails = executeSystemAction(matchedIntent, extractedSlots)
+                
+                // For non-action intents, if responseTextMy is empty, we fall back to general content generation
+                if (responseMy.isEmpty()) {
+                    if (matchedIntent == IntentType.CONVERSATION || 
+                        matchedIntent == IntentType.KNOWLEDGE_QA || 
+                        matchedIntent == IntentType.CREATIVE_WRITING || 
+                        matchedIntent == IntentType.UNKNOWN) {
+                        val systemInstruction = "You are the brain of the Universal Multimodal AI Assistant, a next-generation Burmese AI assistant. Speak in natural, polite Burmese (မြန်မာဘာသာ) with polite endings like 'ခင်ဗျာ' or 'ပါခင်ဗျာ'. You infer intent from natural conversation and proactively select correct tools. You support multi-layer memory (conversational context, recent history, user habits, and knowledge graph relationships), continuous interruptible voice conversation, screen understanding, live camera context, smart automation, and safety checks for sensitive tasks. Be exceptionally concise, helpful, and friendly."
+                        responseMy = geminiEngine.generateContent(queryText, systemInstruction)
+                    } else {
+                        responseMy = "ဟုတ်ကဲ့ပါ ဆောင်ရွက်ပြီးပါပြီခင်ဗျာ။"
+                    }
+                }
+                
+                nluResult = NLUResult(
+                    intent = matchedIntent,
+                    slots = extractedSlots,
+                    confidence = 1.0f,
+                    generatedResponseMy = responseMy
+                )
+                Log.d(tag, "Gemini online NLU successfully processed query. Intent: $matchedIntent")
+            } catch (e: Exception) {
+                Log.e(tag, "Error parsing Gemini classification result, falling back to local NLU: ${e.message}", e)
+            }
+        }
         
-        // Step 3: Call Gemini Engine if it is a general conversation, Q&A, or writing request to provide a highly intelligent response
-        val responseMy = if (nluResult.intent == IntentType.CONVERSATION || 
-                           nluResult.intent == IntentType.KNOWLEDGE_QA || 
-                           nluResult.intent == IntentType.CREATIVE_WRITING || 
-                           nluResult.intent == IntentType.UNKNOWN) {
-            val systemInstruction = "You are R's AI, a next-generation Burmese AI voice assistant inspired by HyperAI, XiaoAi, Google Assistant, Siri, and ChatGPT. Respond in natural, polite Burmese (မြန်မာဘာသာ). Use polite Burmese sentence endings like 'ခင်ဗျာ' or 'ပါခင်ဗျာ'. If the user asks for writing, emails, translation, summary, or coding help, provide beautifully formatted, clear, and comprehensive responses."
-            geminiEngine.generateContent(queryText, systemInstruction)
-        } else {
-            nluResult.generatedResponseMy
+        // 2. Offline fallback if Gemini NLU is not available or failed
+        if (nluResult == null) {
+            // Step 1: NLU Intent Classification & Slot Extraction
+            val offlineNluResult = nluEngine.analyzeSentence(queryText, customMappings)
+            
+            // Step 2: Execute corresponding local Android device action
+            actionDetails = executeSystemAction(offlineNluResult.intent, offlineNluResult.slots)
+            
+            // Step 3: Call Gemini Engine if it is a general conversation, Q&A, or writing request to provide a highly intelligent response
+            responseMy = if (offlineNluResult.intent == IntentType.CONVERSATION || 
+                               offlineNluResult.intent == IntentType.KNOWLEDGE_QA || 
+                               offlineNluResult.intent == IntentType.CREATIVE_WRITING || 
+                               offlineNluResult.intent == IntentType.UNKNOWN) {
+                val systemInstruction = "You are the brain of the Universal Multimodal AI Assistant, a next-generation Burmese AI assistant. Speak in natural, polite Burmese (မြန်မာဘာသာ) with polite endings like 'ခင်ဗျာ' or 'ပါခင်ဗျာ'. You infer intent from natural conversation and proactively select correct tools. You support multi-layer memory (conversational context, recent history, user habits, and knowledge graph relationships), continuous interruptible voice conversation, screen understanding, live camera context, smart automation, and safety checks for sensitive tasks. Be exceptionally concise, helpful, and friendly."
+                geminiEngine.generateContent(queryText, systemInstruction)
+            } else {
+                offlineNluResult.generatedResponseMy
+            }
+            
+            nluResult = offlineNluResult
+            Log.d(tag, "Offline local NLU processed query. Intent: ${offlineNluResult.intent}")
         }
         
         // Step 4: Speak response & synthesize audio wave output

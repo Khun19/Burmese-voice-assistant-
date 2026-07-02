@@ -30,6 +30,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -50,8 +51,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.VideoView
+import android.net.Uri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.feedback.FeedbackEntity
 import com.example.engine.IntentType
@@ -75,9 +78,12 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
     val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
     val lastResult by viewModel.lastProcessResult.collectAsStateWithLifecycle()
     val feedbacks by viewModel.feedbacks.collectAsStateWithLifecycle()
+    val isAutoEnvironmentEnabled by viewModel.isAutoEnvironmentEnabled.collectAsStateWithLifecycle()
+    val currentVoiceProfile by viewModel.currentVoiceProfile.collectAsStateWithLifecycle()
+    val currentNoiseRms by viewModel.currentNoiseRms.collectAsStateWithLifecycle()
 
     // Workspace and Tab management
-    var currentTab by remember { mutableStateOf(0) } // 0 = Assistant, 1 = Feedback Log, 2 = Guide
+    var currentTab by remember { mutableStateOf(0) } // 0 = Assistant, 1 = Feedback Log, 2 = Guide, 3 = Config
     var activeWorkspace by remember { mutableStateOf(WorkspaceType.ASSISTANT) }
 
     // Screen input states
@@ -90,8 +96,6 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
     // Selected items for simulations
     var selectedDocument by remember { mutableStateOf("business_report.pdf") }
     var selectedScreenState by remember { mutableStateOf("System Error Dialog on Main Home launcher") }
-
-
 
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -148,136 +152,133 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                     }
                 },
                 actions = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(end = 8.dp)
+                    IconButton(
+                        onClick = {
+                            viewModel.simulateWakeWordTrigger()
+                        },
+                        modifier = Modifier.testTag("simulate_wake_button")
                     ) {
-                        Text(
-                            text = if (isWakeWordActive) "Hey Bro: On" else "Hey Bro: Off",
-                            color = if (isWakeWordActive) Color(0xFF10B981) else Color(0xFFEF4444),
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(end = 6.dp)
-                        )
-                        Switch(
-                            checked = isWakeWordActive,
-                            onCheckedChange = { viewModel.toggleWakeWordEngine(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color(0xFF10B981),
-                                checkedTrackColor = Color(0xFF064E3B),
-                                uncheckedThumbColor = Color(0xFFEF4444),
-                                uncheckedTrackColor = Color(0xFF7F1D1D)
-                            ),
-                            modifier = Modifier.testTag("wake_word_switch")
-                        )
+                        Icon(Icons.Default.Bolt, "Simulate Wake word", tint = neonCyan)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF030712),
-                    titleContentColor = Color.White
+                    containerColor = Color(0xFF030712)
                 )
             )
         },
         bottomBar = {
             NavigationBar(
-                containerColor = Color(0xFF030712),
-                contentColor = Color.White
+                containerColor = Color(0xFF030712)
             ) {
                 NavigationBarItem(
                     selected = currentTab == 0,
                     onClick = { currentTab = 0 },
-                    icon = { Icon(Icons.Default.Dashboard, contentDescription = "Intelligence Workspace") },
-                    label = { Text("အလုပ်ခွင်") },
+                    icon = { Icon(Icons.Default.Chat, "Chat assistant") },
+                    label = { Text("စကားပြောခန်း") },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = neonCyan,
                         selectedTextColor = neonCyan,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color(0xFF1E293B)
+                        unselectedIconColor = Color.LightGray,
+                        unselectedTextColor = Color.LightGray,
+                        indicatorColor = neonCyan.copy(alpha = 0.15f)
                     )
                 )
                 NavigationBarItem(
                     selected = currentTab == 1,
                     onClick = { currentTab = 1 },
-                    icon = { Icon(Icons.Default.History, contentDescription = "Local Feedback database") },
-                    label = { Text("မှတ်တမ်း") },
+                    icon = { Icon(Icons.Default.Storage, "Feedback local storage database viewer") },
+                    label = { Text("ဒေတာဘေ့စ်") },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = neonPurple,
                         selectedTextColor = neonPurple,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color(0xFF1E293B)
+                        unselectedIconColor = Color.LightGray,
+                        unselectedTextColor = Color.LightGray,
+                        indicatorColor = neonPurple.copy(alpha = 0.15f)
                     )
                 )
                 NavigationBarItem(
                     selected = currentTab == 2,
                     onClick = { currentTab = 2 },
-                    icon = { Icon(Icons.Default.Info, contentDescription = "Guide and Technical Help") },
-                    label = { Text("လမ်းညွှန်") },
+                    icon = { Icon(Icons.Default.LibraryBooks, "Architecture roadmap builder guide") },
+                    label = { Text("နည်းပညာ") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFFF59E0B),
-                        selectedTextColor = Color(0xFFF59E0B),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color(0xFF1E293B)
+                        selectedIconColor = neonPink,
+                        selectedTextColor = neonPink,
+                        unselectedIconColor = Color.LightGray,
+                        unselectedTextColor = Color.LightGray,
+                        indicatorColor = neonPink.copy(alpha = 0.15f)
                     )
                 )
                 NavigationBarItem(
                     selected = currentTab == 3,
                     onClick = { currentTab = 3 },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Custom Voice Commands Settings") },
-                    label = { Text("ဆက်တင်") },
+                    icon = { Icon(Icons.Default.Settings, "Config voice custom mapping settings") },
+                    label = { Text("ပြင်ဆင်ချက်") },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = neonCyan,
                         selectedTextColor = neonCyan,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color(0xFF1E293B)
+                        unselectedIconColor = Color.LightGray,
+                        unselectedTextColor = Color.LightGray,
+                        indicatorColor = neonCyan.copy(alpha = 0.15f)
                     )
                 )
             }
         }
-    ) { innerPadding ->
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .background(bgGradient)
-                .padding(innerPadding)
         ) {
             when (currentTab) {
                 0 -> {
+                    // MAIN INTERACTIVE HUB (WORKSPACES)
                     Column(modifier = Modifier.fillMaxSize()) {
-                        // Horizontal Sub-workspace selector
+                        // Horizontal Workspace tabs selector row
                         LazyRow(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(Color(0xFF030712))
-                                .padding(vertical = 8.dp, horizontal = 12.dp),
+                                .padding(vertical = 6.dp, horizontal = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(WorkspaceType.values()) { workspace ->
+                            items(WorkspaceType.values().toList()) { workspace ->
                                 val isSelected = activeWorkspace == workspace
-                                val chipBg = if (isSelected) neonCyan.copy(alpha = 0.2f) else glassBg
-                                val chipBorder = if (isSelected) neonCyan else glassBorder
+                                val activeTabColor = when (workspace) {
+                                    WorkspaceType.ASSISTANT -> neonCyan
+                                    WorkspaceType.WRITING -> neonPurple
+                                    WorkspaceType.IMAGE -> neonPink
+                                    WorkspaceType.DOCUMENTS -> neonCyan
+                                    WorkspaceType.SMART_HOME -> neonPurple
+                                    WorkspaceType.TRANSLATOR -> neonPink
+                                }
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(16.dp))
-                                        .background(chipBg)
-                                        .border(1.dp, chipBorder, RoundedCornerShape(16.dp))
+                                        .background(if (isSelected) activeTabColor.copy(alpha = 0.2f) else glassBg)
+                                        .border(
+                                            1.dp,
+                                            if (isSelected) activeTabColor else glassBorder,
+                                            RoundedCornerShape(16.dp)
+                                        )
                                         .clickable { activeWorkspace = workspace }
-                                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        .testTag("workspace_tab_${workspace.name}"),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            workspace.icon,
+                                            imageVector = workspace.icon,
                                             contentDescription = workspace.displayName,
-                                            tint = if (isSelected) neonCyan else Color.White,
-                                            modifier = Modifier.size(16.dp)
+                                            tint = if (isSelected) activeTabColor else Color.LightGray,
+                                            modifier = Modifier.size(14.dp)
                                         )
-                                        Spacer(Modifier.width(6.dp))
+                                        Spacer(Modifier.width(4.dp))
                                         Text(
-                                            workspace.displayName,
-                                            color = if (isSelected) neonCyan else Color.White,
-                                            fontSize = 12.sp,
+                                            text = workspace.displayName,
+                                            color = if (isSelected) Color.White else Color.LightGray,
+                                            fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
@@ -285,216 +286,178 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                             }
                         }
 
-                        // Render Workspace Content
+                        // Render selected workspace panel contents
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             when (activeWorkspace) {
                                 WorkspaceType.ASSISTANT -> {
-                                    // 1. VOICE ASSISTANT WITH GLOWING ORB
+                                    // 1. DYNAMIC BOT CHAT & SYSTEM INTENT CLASSIFICATION ENGINE
+                                    val activeModel by viewModel.activeChatModel.collectAsStateWithLifecycle()
+                                    val thinkingEnabled by viewModel.thinkingModeEnabled.collectAsStateWithLifecycle()
+                                    val searchGrounding by viewModel.searchGroundingEnabled.collectAsStateWithLifecycle()
+                                    val mapsGrounding by viewModel.mapsGroundingEnabled.collectAsStateWithLifecycle()
+
                                     Column(modifier = Modifier.fillMaxSize()) {
+                                        
+                                        // UPPER DYNAMIC CONTROL BAR
                                         Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(bottom = 12.dp),
+                                                .padding(bottom = 8.dp),
                                             colors = CardDefaults.cardColors(containerColor = Color(0x33334155)),
                                             border = BorderStroke(1.dp, glassBorder)
                                         ) {
-                                            Column(
-                                                modifier = Modifier.padding(16.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally
-                                            ) {
+                                            Column(modifier = Modifier.padding(10.dp)) {
                                                 Row(
                                                     modifier = Modifier.fillMaxWidth(),
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    Column {
-                                                        Text(
-                                                            "Burmese AI Engine Status",
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = Color.White,
-                                                            fontSize = 14.sp
-                                                        )
-                                                        Text(
-                                                            "Hybrid Local NLU + Cloud Gemini 3.5",
-                                                            color = Color(0xFF94A3B8),
-                                                            fontSize = 11.sp
-                                                        )
-                                                    }
-                                                    Button(
-                                                        onClick = { viewModel.simulateWakeWordTrigger() },
-                                                        colors = ButtonDefaults.buttonColors(containerColor = neonPurple),
-                                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                                        modifier = Modifier.testTag("wake_word_simulate_button")
-                                                    ) {
-                                                        Icon(Icons.Default.ElectricBolt, "Trigger Orb", modifier = Modifier.size(14.dp))
-                                                        Spacer(Modifier.width(4.dp))
-                                                        Text("Hey Bro!", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                                    }
-                                                }
-
-                                                Spacer(Modifier.height(12.dp))
-                                                HorizontalDivider(color = Color.Gray.copy(alpha = 0.2f))
-                                                Spacer(Modifier.height(12.dp))
-                                                
-                                                val activeProfile by viewModel.currentVoiceProfile.collectAsStateWithLifecycle()
-                                                
-                                                Column(modifier = Modifier.fillMaxWidth()) {
-                                                    Text(
-                                                        "Live Voice Chat Profile (အသံပတ်ဝန်းကျင် ရွေးချယ်မှု)",
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = neonCyan,
-                                                        fontSize = 12.sp,
-                                                        modifier = Modifier.padding(bottom = 6.dp)
-                                                    )
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                     ) {
-                                                         // Indoor Option Button
-                                                         Button(
-                                                             onClick = { viewModel.setVoiceProfile(com.example.engine.VoiceProfile.INDOOR) },
-                                                             colors = ButtonDefaults.buttonColors(
-                                                                 containerColor = if (activeProfile == com.example.engine.VoiceProfile.INDOOR) neonCyan else Color(0xFF1E293B)
-                                                             ),
-                                                             modifier = Modifier
-                                                                 .weight(1f)
-                                                                 .height(36.dp)
-                                                                 .testTag("profile_indoor_btn"),
-                                                             contentPadding = PaddingValues(0.dp)
-                                                         ) {
-                                                             Icon(
-                                                                 Icons.Default.Home,
-                                                                 contentDescription = "Indoor Mode",
-                                                                 tint = if (activeProfile == com.example.engine.VoiceProfile.INDOOR) Color.Black else Color.White,
-                                                                 modifier = Modifier.size(14.dp)
-                                                             )
-                                                             Spacer(Modifier.width(4.dp))
-                                                             Text(
-                                                                 "အိမ်တွင်း (Indoor)",
-                                                                 fontSize = 11.sp,
-                                                                 fontWeight = FontWeight.Bold,
-                                                                 color = if (activeProfile == com.example.engine.VoiceProfile.INDOOR) Color.Black else Color.White
-                                                             )
-                                                         }
-                                                         
-                                                         // Outdoor Option Button
-                                                         Button(
-                                                             onClick = { viewModel.setVoiceProfile(com.example.engine.VoiceProfile.OUTDOOR) },
-                                                             colors = ButtonDefaults.buttonColors(
-                                                                 containerColor = if (activeProfile == com.example.engine.VoiceProfile.OUTDOOR) neonPurple else Color(0xFF1E293B)
-                                                             ),
-                                                             modifier = Modifier
-                                                                 .weight(1f)
-                                                                 .height(36.dp)
-                                                                 .testTag("profile_outdoor_btn"),
-                                                             contentPadding = PaddingValues(0.dp)
-                                                         ) {
-                                                             Icon(
-                                                                 Icons.Default.VolumeUp,
-                                                                 contentDescription = "Outdoor Mode",
-                                                                 tint = if (activeProfile == com.example.engine.VoiceProfile.OUTDOOR) Color.Black else Color.White,
-                                                                 modifier = Modifier.size(14.dp)
-                                                             )
-                                                             Spacer(Modifier.width(4.dp))
-                                                             Text(
-                                                                 "အပြင်ဘက် (Outdoor)",
-                                                                 fontSize = 11.sp,
-                                                                 fontWeight = FontWeight.Bold,
-                                                                 color = if (activeProfile == com.example.engine.VoiceProfile.OUTDOOR) Color.Black else Color.White
-                                                             )
-                                                         }
-                                                     }
-                                                     
-                                                     // Helper text
-                                                     Text(
-                                                         text = if (activeProfile == com.example.engine.VoiceProfile.INDOOR) {
-                                                             "🏡 Quiet-focus mode. Standard speakers. Clean mic sensitivity."
-                                                         } else {
-                                                             "📢 High ambient noise cancellation. Max audio boost (+12dB). Clear speech rate."
-                                                         },
-                                                         color = Color.LightGray,
-                                                         fontSize = 10.sp,
-                                                         modifier = Modifier.padding(top = 6.dp)
-                                                     )
-                                                 }
-
-                                                 Spacer(Modifier.height(16.dp))
-
-                                                // Gorgeous Interactive Orb Animation Frame
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(100.dp)
-                                                        .clip(CircleShape)
-                                                        .background(
-                                                            Brush.radialGradient(
-                                                                colors = listOf(
-                                                                    if (isListening) Color.Red else if (isProcessing) neonPurple else neonCyan,
-                                                                    Color.Transparent
-                                                                )
+                                                    // Model Selection
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text("Model: ", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                        var modelExpanded by remember { mutableStateOf(false) }
+                                                        Box {
+                                                            Text(
+                                                                text = activeModel,
+                                                                color = neonCyan,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.ExtraBold,
+                                                                modifier = Modifier
+                                                                    .clickable { modelExpanded = true }
+                                                                    .padding(horizontal = 4.dp, vertical = 2.dp)
                                                             )
-                                                        )
-                                                        .border(
-                                                            BorderStroke(
-                                                                2.dp,
-                                                                if (isListening) Color.Red else if (isProcessing) neonPurple else neonCyan
-                                                            ),
-                                                            CircleShape
-                                                        )
-                                                        .clickable {
-                                                            if (isListening) viewModel.cancelVoiceCapture() else viewModel.startVoiceCapture()
-                                                        },
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    // Rotating / pulsing core
-                                                    val pulseScale by rememberInfiniteTransition(label = "").animateFloat(
-                                                        initialValue = 0.8f,
-                                                        targetValue = 1.2f,
-                                                        animationSpec = infiniteRepeatable(
-                                                            animation = tween(1000, easing = EaseInOutSine),
-                                                            repeatMode = RepeatMode.Reverse
-                                                        ),
-                                                        label = ""
-                                                    )
-                                                    Image(
-                                                        painter = painterResource(id = R.drawable.img_rs_ai_logo),
-                                                        contentDescription = "Core Logo",
-                                                        modifier = Modifier
-                                                            .size(70.dp * pulseScale)
-                                                            .clip(CircleShape)
-                                                    )
+                                                            DropdownMenu(
+                                                                expanded = modelExpanded,
+                                                                onDismissRequest = { modelExpanded = false },
+                                                                modifier = Modifier.background(Color(0xFF1E293B))
+                                                            ) {
+                                                                listOf("gemini-3.5-flash", "gemini-3.1-flash-lite-preview", "gemini-3.1-pro-preview").forEach { m ->
+                                                                    DropdownMenuItem(
+                                                                        text = { Text(m, color = Color.White, fontSize = 11.sp) },
+                                                                        onClick = {
+                                                                            viewModel.setActiveChatModel(m)
+                                                                            modelExpanded = false
+                                                                        }
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    // High-Speed Voice Call Button
+                                                    Button(
+                                                        onClick = { viewModel.startVoiceCall() },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = neonPurple),
+                                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                                        modifier = Modifier.height(28.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Phone, "Call Live", tint = Color.White, modifier = Modifier.size(12.dp))
+                                                        Spacer(Modifier.width(4.dp))
+                                                        Text("Gemini Live", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                                    }
                                                 }
 
-                                                Spacer(Modifier.height(12.dp))
+                                                Spacer(Modifier.height(6.dp))
 
-                                                // Dynamic Waveform or Status Box
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(40.dp)
-                                                        .clip(RoundedCornerShape(12.dp))
-                                                        .background(Color(0xFF030712))
-                                                        .padding(horizontal = 12.dp),
-                                                    contentAlignment = Alignment.Center
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                 ) {
-                                                    if (isListening) {
-                                                        VoiceWaveform(color = Color.Red)
-                                                        Text("အသံဖမ်းယူနေပါသည်... စကားပြောပါ", color = Color.Red, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                                    } else if (isProcessing) {
-                                                        VoiceWaveform(color = neonPurple)
-                                                        Text("R's AI စဉ်းစားနေပါသည်...", color = neonPurple, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                                    } else {
+                                                    // Grounding Toggles
+                                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                                        Checkbox(
+                                                            checked = searchGrounding,
+                                                            onCheckedChange = { viewModel.setSearchGroundingEnabled(it) },
+                                                            colors = CheckboxDefaults.colors(checkedColor = neonCyan)
+                                                        )
+                                                        Text("🌐 Search", color = Color.LightGray, fontSize = 9.sp)
+                                                    }
+                                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                                        Checkbox(
+                                                            checked = mapsGrounding,
+                                                            onCheckedChange = { viewModel.setMapsGroundingEnabled(it) },
+                                                            colors = CheckboxDefaults.colors(checkedColor = neonCyan)
+                                                        )
+                                                        Text("🗺️ Maps", color = Color.LightGray, fontSize = 9.sp)
+                                                    }
+                                                    if (activeModel.contains("pro")) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1.2f)) {
+                                                            Switch(
+                                                                checked = thinkingEnabled,
+                                                                onCheckedChange = { viewModel.setThinkingModeEnabled(it) },
+                                                                colors = SwitchDefaults.colors(checkedThumbColor = neonPurple)
+                                                            )
+                                                            Spacer(Modifier.width(2.dp))
+                                                            Text("🧠 Thinking", color = Color.LightGray, fontSize = 9.sp)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Ambient Noise & Micro Speech Diagnostics monitor bar
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 8.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0x2210B981)),
+                                            border = BorderStroke(1.dp, Color(0x3310B981))
+                                        ) {
+                                            Column(modifier = Modifier.padding(10.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(8.dp)
+                                                                .clip(CircleShape)
+                                                                .background(if (isWakeWordActive) Color(0xFF10B981) else Color.Gray)
+                                                        )
+                                                        Spacer(Modifier.width(6.dp))
                                                         Text(
-                                                            "အသံဖြင့်ခေါ်ဆိုရန် အလယ်မှ Orb ကို နှိပ်ပါ",
+                                                            text = if (isWakeWordActive) "KWS Listening continuous ('Hey R's AI' active)" else "KWS Inactive",
+                                                            color = Color.White,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                    }
+                                                    Row {
+                                                        Text(
+                                                            text = "ဆူညံသံ: ",
                                                             color = Color.Gray,
                                                             fontSize = 11.sp
                                                         )
+                                                        Text(
+                                                            text = "${String.format("%.1f", currentNoiseRms)} RMS",
+                                                            color = if (currentNoiseRms > 350.0) Color(0xFFEF4444) else Color(0xFF10B981),
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
                                                     }
                                                 }
+
+                                                Spacer(Modifier.height(6.dp))
+
+                                                // Dynamic visual level meter progress bar
+                                                val progressNormalized = (currentNoiseRms.toFloat() / 1000f).coerceIn(0f, 1f)
+                                                val meterColor = if (currentNoiseRms > 350.0) Color(0xFFF59E0B) else Color(0xFF10B981)
+                                                LinearProgressIndicator(
+                                                    progress = { progressNormalized },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(4.dp)
+                                                        .clip(RoundedCornerShape(2.dp)),
+                                                    color = meterColor,
+                                                    trackColor = Color.Gray.copy(alpha = 0.2f)
+                                                )
                                             }
                                         }
 
@@ -508,6 +471,43 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                         ) {
                                             items(chatLog) { msg ->
                                                 ChatBubble(message = msg)
+                                            }
+                                        }
+
+                                        // Feedback dialog proposal bar
+                                        lastResult?.let { res ->
+                                            Card(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                                                border = BorderStroke(1.dp, neonPurple)
+                                            ) {
+                                                Column(modifier = Modifier.padding(10.dp)) {
+                                                    Text("အခုအဖြေကို ကျေနပ်မှုရှိရဲ့လားခင်ဗျာ။ (Provide Feedback)", color = Color.White, fontSize = 11.sp)
+                                                    Spacer(Modifier.height(6.dp))
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                                    ) {
+                                                        Button(
+                                                            onClick = { viewModel.submitFeedback(1) },
+                                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669))
+                                                        ) {
+                                                            Icon(Icons.Default.ThumbUp, "Up", modifier = Modifier.size(14.dp))
+                                                            Spacer(Modifier.width(4.dp))
+                                                            Text("ကျေနပ်တယ်", fontSize = 10.sp)
+                                                        }
+                                                        Button(
+                                                            onClick = { viewModel.submitFeedback(0, "မမှန်ကန်ပါ") },
+                                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
+                                                        ) {
+                                                            Icon(Icons.Default.ThumbDown, "Down", modifier = Modifier.size(14.dp))
+                                                            Spacer(Modifier.width(4.dp))
+                                                            Text("မကျေနပ်ပါ", fontSize = 10.sp)
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
 
@@ -698,9 +698,17 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                     }
                                 }
                                 WorkspaceType.IMAGE -> {
-                                    // 3. AI IMAGE STUDIO (WALLPAPER & PHOTO EDITOR)
+                                    // 3. AI IMAGE STUDIO (WALLPAPER, RESOLUTIONS & VEO VIDEO CREATION)
+                                    val activeImgModel by viewModel.activeImageModel.collectAsStateWithLifecycle()
+                                    val selectedRatio by viewModel.selectedAspectRatio.collectAsStateWithLifecycle()
+                                    val selectedSize by viewModel.selectedImageSize.collectAsStateWithLifecycle()
+                                    val generatedVideoUrl by viewModel.generatedVideoResult.collectAsStateWithLifecycle()
+                                    val isVideoLoading by viewModel.isVideoLoading.collectAsStateWithLifecycle()
+
                                     var generatedImageResult by remember { mutableStateOf<Int?>(null) }
                                     var isImageLoading by remember { mutableStateOf(false) }
+                                    var videoPromptInput by remember { mutableStateOf("") }
+                                    var selectedVideoRatio by remember { mutableStateOf("16:9") }
 
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize(),
@@ -708,16 +716,70 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                     ) {
                                         item {
                                             Text(
-                                                "R's Image Studio",
+                                                "R's Image & Veo Video Studio",
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 fontSize = 16.sp
                                             )
                                             Text(
-                                                "Wallpaper Generator & AI Photo Expanded Filters",
+                                                "Wallpaper Generator, Image Resolutions & Cinematic Video",
                                                 color = Color.LightGray,
                                                 fontSize = 11.sp
                                             )
+                                        }
+
+                                        item {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0x22EC4899)),
+                                                border = BorderStroke(1.dp, glassBorder)
+                                            ) {
+                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                    Text("Image Resolution Settings", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                    Spacer(Modifier.height(6.dp))
+                                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                        // Model Choice
+                                                        Column(modifier = Modifier.weight(1.5f)) {
+                                                            Text("Model", color = Color.LightGray, fontSize = 9.sp)
+                                                            var imgModelExpanded by remember { mutableStateOf(false) }
+                                                            Box {
+                                                                Text(activeImgModel, color = neonPink, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { imgModelExpanded = true })
+                                                                DropdownMenu(expanded = imgModelExpanded, onDismissRequest = { imgModelExpanded = false }) {
+                                                                    listOf("gemini-3.1-flash-image-preview", "gemini-3-pro-image-preview").forEach { m ->
+                                                                        DropdownMenuItem(text = { Text(m) }, onClick = { viewModel.setActiveImageModel(m); imgModelExpanded = false })
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        // Aspect Ratio Choice
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text("Aspect Ratio", color = Color.LightGray, fontSize = 9.sp)
+                                                            var ratioExpanded by remember { mutableStateOf(false) }
+                                                            Box {
+                                                                Text(selectedRatio, color = neonPink, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { ratioExpanded = true })
+                                                                DropdownMenu(expanded = ratioExpanded, onDismissRequest = { ratioExpanded = false }) {
+                                                                    listOf("1:1", "3:4", "4:3", "9:16", "16:9", "21:9").forEach { r ->
+                                                                        DropdownMenuItem(text = { Text(r) }, onClick = { viewModel.setSelectedAspectRatio(r); ratioExpanded = false })
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        // Size/Quality Choice
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text("Quality", color = Color.LightGray, fontSize = 9.sp)
+                                                            var sizeExpanded by remember { mutableStateOf(false) }
+                                                            Box {
+                                                                Text(selectedSize, color = neonPink, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { sizeExpanded = true })
+                                                                DropdownMenu(expanded = sizeExpanded, onDismissRequest = { sizeExpanded = false }) {
+                                                                    listOf("1K", "2K", "4K").forEach { s ->
+                                                                        DropdownMenuItem(text = { Text(s) }, onClick = { viewModel.setSelectedImageSize(s); sizeExpanded = false })
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
 
                                         item {
@@ -737,35 +799,20 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                         }
 
                                         item {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                val imageTools = listOf(
-                                                    "Wallpaper" to "🎨 Wallpaper",
-                                                    "Expand" to "📐 Expand",
-                                                    "RemoveObj" to "🧹 Remove Object",
-                                                    "SkyReplace" to "🌌 Sky Change"
-                                                )
-                                                imageTools.forEach { (tool, label) ->
-                                                    Button(
-                                                        onClick = {
-                                                            isImageLoading = true
-                                                            generatedImageResult = null
-                                                            scope.launch {
-                                                                kotlinx.coroutines.delay(2000)
-                                                                isImageLoading = false
-                                                                // Point to generated banner or logo as realistic simulated outcomes
-                                                                generatedImageResult = if (tool == "Wallpaper") R.drawable.img_home_banner else R.drawable.img_rs_ai_logo
-                                                            }
-                                                        },
-                                                        colors = ButtonDefaults.buttonColors(containerColor = neonPink),
-                                                        modifier = Modifier.weight(1.5f),
-                                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
-                                                    ) {
-                                                        Text(label, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            Button(
+                                                onClick = {
+                                                    isImageLoading = true
+                                                    generatedImageResult = null
+                                                    scope.launch {
+                                                        kotlinx.coroutines.delay(2000)
+                                                        isImageLoading = false
+                                                        generatedImageResult = R.drawable.img_home_banner
                                                     }
-                                                }
+                                                },
+                                                colors = ButtonDefaults.buttonColors(containerColor = neonPink),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text("Generate Image (Studio Quality)", fontWeight = FontWeight.Bold)
                                             }
                                         }
 
@@ -775,7 +822,7 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                         CircularProgressIndicator(color = neonPink)
                                                         Spacer(Modifier.height(4.dp))
-                                                        Text("AI စနစ်မှ ပုံဆွဲနေပါသည်...", color = Color.LightGray, fontSize = 11.sp)
+                                                        Text("Studio Rendering active...", color = Color.LightGray, fontSize = 11.sp)
                                                     }
                                                 }
                                             }
@@ -789,25 +836,105 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                                     border = BorderStroke(1.dp, neonPink.copy(alpha = 0.5f))
                                                 ) {
                                                     Column(modifier = Modifier.padding(12.dp)) {
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text("AI Processed Image", fontWeight = FontWeight.Bold, color = neonPink, fontSize = 13.sp)
-                                                            Button(
-                                                                onClick = { /* Simulated action */ },
-                                                                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                                                            ) {
-                                                                Text("Save Wallpaper", fontSize = 10.sp)
-                                                            }
-                                                        }
+                                                        Text("Generated Image ($selectedSize, Ratio $selectedRatio)", fontWeight = FontWeight.Bold, color = neonPink, fontSize = 11.sp)
                                                         Spacer(Modifier.height(10.dp))
                                                         Image(
                                                             painter = painterResource(id = imgRes),
                                                             contentDescription = "Simulated Image Result",
                                                             contentScale = ContentScale.Crop,
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(180.dp)
+                                                                .clip(RoundedCornerShape(8.dp))
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // VEO VIDEO GENERATOR SECTION
+                                        item {
+                                            Spacer(Modifier.height(8.dp))
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0x331E1B4B)),
+                                                border = BorderStroke(1.dp, neonPurple)
+                                            ) {
+                                                Column(modifier = Modifier.padding(14.dp)) {
+                                                    Text("🎬 Veo Cinematic 3.1 Video Engine", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                                    Text("Create ultra high-definition videos from plain text descriptions", color = Color.LightGray, fontSize = 11.sp)
+                                                    Spacer(Modifier.height(10.dp))
+
+                                                    OutlinedTextField(
+                                                        value = videoPromptInput,
+                                                        onValueChange = { videoPromptInput = it },
+                                                        placeholder = { Text("Describe the cinematic video scene...", color = Color.DarkGray) },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        colors = OutlinedTextFieldDefaults.colors(
+                                                            focusedBorderColor = neonPurple,
+                                                            focusedTextColor = Color.White,
+                                                            unfocusedTextColor = Color.White
+                                                        )
+                                                    )
+
+                                                    Spacer(Modifier.height(8.dp))
+
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Row {
+                                                            Text("Video Aspect Ratio: ", color = Color.White, fontSize = 11.sp)
+                                                            Text(
+                                                                text = selectedVideoRatio,
+                                                                color = neonCyan,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                modifier = Modifier.clickable {
+                                                                    selectedVideoRatio = if (selectedVideoRatio == "16:9") "9:16" else "16:9"
+                                                                }
+                                                            )
+                                                        }
+
+                                                        Button(
+                                                            onClick = { viewModel.generateVideo(videoPromptInput, selectedVideoRatio) },
+                                                            colors = ButtonDefaults.buttonColors(containerColor = neonPurple),
+                                                            enabled = !isVideoLoading
+                                                        ) {
+                                                            Text("Animate (Veo 3.1)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (isVideoLoading) {
+                                            item {
+                                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                                    CircularProgressIndicator(color = neonPurple)
+                                                }
+                                            }
+                                        }
+
+                                        generatedVideoUrl?.let { videoUrl ->
+                                            item {
+                                                Card(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                                                    border = BorderStroke(1.dp, neonPurple.copy(alpha = 0.5f))
+                                                ) {
+                                                    Column(modifier = Modifier.padding(12.dp)) {
+                                                        Text("Veo Generated Video", fontWeight = FontWeight.Bold, color = neonPurple, fontSize = 11.sp)
+                                                        Spacer(Modifier.height(8.dp))
+                                                        // Real Android native video stream view inside Compose!
+                                                        AndroidView(
+                                                            factory = { ctx ->
+                                                                VideoView(ctx).apply {
+                                                                    setVideoURI(Uri.parse(videoUrl))
+                                                                    start()
+                                                                }
+                                                            },
                                                             modifier = Modifier
                                                                 .fillMaxWidth()
                                                                 .height(200.dp)
@@ -820,21 +947,234 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                     }
                                 }
                                 WorkspaceType.DOCUMENTS -> {
-                                    // 4. DOCUMENT SUMMARIZER & VOICE TRANSCRIPTS
+                                    // 4. DOCUMENT HUB & LYRIA MUSIC STUDIO & MULTIMODAL MEDIA ANALYZER
                                     val documentSummary by viewModel.documentSummary.collectAsStateWithLifecycle()
                                     val isDocLoading by viewModel.isDocumentSummaryLoading.collectAsStateWithLifecycle()
                                     val meetingTranscript by viewModel.meetingTranscript.collectAsStateWithLifecycle()
                                     val isTranscriptLoading by viewModel.isTranscriptLoading.collectAsStateWithLifecycle()
+
+                                    // Lyria States
+                                    val isMusicLoading by viewModel.isMusicLoading.collectAsStateWithLifecycle()
+                                    val musicModel by viewModel.activeMusicModel.collectAsStateWithLifecycle()
+                                    val musicResultUrl by viewModel.generatedMusicResult.collectAsStateWithLifecycle()
+                                    var musicPromptInput by remember { mutableStateOf("") }
+
+                                    // Multimodal states
+                                    var imageAnalysisPrompt by remember { mutableStateOf("") }
+                                    val analyzedResult by viewModel.analyzedImageResult.collectAsStateWithLifecycle()
+                                    val isImageAnalyzing by viewModel.isImageAnalyzing.collectAsStateWithLifecycle()
+
+                                    var audioTranscriptPrompt by remember { mutableStateOf("") }
+                                    val audioTranscriptResult by viewModel.audioTranscriptResult.collectAsStateWithLifecycle()
+                                    val isAudioTranscribing by viewModel.isAudioTranscribing.collectAsStateWithLifecycle()
 
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize(),
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
                                         item {
-                                            Text("R's Document & Voice Hub", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
-                                            Text("PDF Summarizers & Multi-speaker Meeting transcripts", color = Color.LightGray, fontSize = 11.sp)
+                                            Text("R's Doc, Voice & Sound Hub", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
+                                            Text("Lyria Music Studio, PDF Summarizers & Audio Transcribers", color = Color.LightGray, fontSize = 11.sp)
                                         }
 
+                                        // LYRIA MUSIC GENERATOR
+                                        item {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0x3306B6D4)),
+                                                border = BorderStroke(1.dp, neonCyan.copy(alpha = 0.5f))
+                                            ) {
+                                                Column(modifier = Modifier.padding(14.dp)) {
+                                                    Text("🎵 Lyria AI Music Studio", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
+                                                    Text("Create melodic tracks or clips with deep music modeling", color = Color.LightGray, fontSize = 11.sp)
+                                                    Spacer(Modifier.height(10.dp))
+
+                                                    OutlinedTextField(
+                                                        value = musicPromptInput,
+                                                        onValueChange = { musicPromptInput = it },
+                                                        placeholder = { Text("An ambient lofi track with traditional saung elements...", color = Color.DarkGray) },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        colors = OutlinedTextFieldDefaults.colors(
+                                                            focusedBorderColor = neonCyan,
+                                                            focusedTextColor = Color.White,
+                                                            unfocusedTextColor = Color.White
+                                                        )
+                                                    )
+
+                                                    Spacer(Modifier.height(8.dp))
+
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        var musicModelExpanded by remember { mutableStateOf(false) }
+                                                        Box {
+                                                            Text("Model: $musicModel", color = neonCyan, fontSize = 11.sp, modifier = Modifier.clickable { musicModelExpanded = true })
+                                                            DropdownMenu(expanded = musicModelExpanded, onDismissRequest = { musicModelExpanded = false }) {
+                                                                listOf("lyria-3-clip-preview", "lyria-3-pro-preview").forEach { m ->
+                                                                    DropdownMenuItem(text = { Text(m) }, onClick = { viewModel.setActiveMusicModel(m); musicModelExpanded = false })
+                                                                }
+                                                            }
+                                                        }
+
+                                                        Button(
+                                                            onClick = { viewModel.generateMusic(musicPromptInput, musicModel) },
+                                                            colors = ButtonDefaults.buttonColors(containerColor = neonCyan),
+                                                            enabled = !isMusicLoading
+                                                        ) {
+                                                            Text("Compose Track", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (isMusicLoading) {
+                                            item {
+                                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                                    CircularProgressIndicator(color = neonCyan)
+                                                }
+                                            }
+                                        }
+
+                                        musicResultUrl?.let { mUrl ->
+                                            item {
+                                                Card(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                                                    border = BorderStroke(1.dp, neonCyan.copy(alpha = 0.5f))
+                                                ) {
+                                                    Column(modifier = Modifier.padding(14.dp)) {
+                                                        Text("Lyria Audio Output", fontWeight = FontWeight.Bold, color = neonCyan, fontSize = 12.sp)
+                                                        Spacer(Modifier.height(6.dp))
+                                                        
+                                                        // Custom Interactive Media Player Controls
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            IconButton(onClick = {}) {
+                                                                Icon(Icons.Default.PlayArrow, "Play", tint = Color.White)
+                                                            }
+                                                            Spacer(Modifier.width(8.dp))
+                                                            Slider(
+                                                                value = 0.35f,
+                                                                onValueChange = {},
+                                                                modifier = Modifier.weight(1f),
+                                                                colors = SliderDefaults.colors(thumbColor = neonCyan, activeTrackColor = neonCyan)
+                                                            )
+                                                            Spacer(Modifier.width(8.dp))
+                                                            Text("0:12 / 0:30", color = Color.LightGray, fontSize = 11.sp)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // MULTIMODAL AUDIO TRANSCRIPTION
+                                        item {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0x33EC4899)),
+                                                border = BorderStroke(1.dp, glassBorder)
+                                            ) {
+                                                Column(modifier = Modifier.padding(14.dp)) {
+                                                    Text("🎤 Gemini Speech Transcription (Transcriber)", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                                    Spacer(Modifier.height(6.dp))
+                                                    OutlinedTextField(
+                                                        value = audioTranscriptPrompt,
+                                                        onValueChange = { audioTranscriptPrompt = it },
+                                                        placeholder = { Text("Translate or transcribe spoken audio files...", color = Color.DarkGray) },
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                    Spacer(Modifier.height(8.dp))
+                                                    Button(
+                                                        onClick = { viewModel.transcribeAudioContent(audioTranscriptPrompt) },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = neonPink),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text("Transcribe Audio Content (using 3.5-flash)")
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (isAudioTranscribing) {
+                                            item {
+                                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                                    CircularProgressIndicator(color = neonPink)
+                                                }
+                                            }
+                                        }
+
+                                        if (audioTranscriptResult.isNotBlank()) {
+                                            item {
+                                                Card(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+                                                ) {
+                                                    Column(modifier = Modifier.padding(12.dp)) {
+                                                        Text("Spoken Audio Transcript", color = neonPink, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                        Spacer(Modifier.height(4.dp))
+                                                        Text(audioTranscriptResult, color = Color.White, fontSize = 12.sp)
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // IMAGE MULTIMODAL ANALYZER
+                                        item {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0x338B5CF6)),
+                                                border = BorderStroke(1.dp, glassBorder)
+                                            ) {
+                                                Column(modifier = Modifier.padding(14.dp)) {
+                                                    Text("🖼️ Visual Multimodal Analyzer", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                                    Spacer(Modifier.height(6.dp))
+                                                    OutlinedTextField(
+                                                        value = imageAnalysisPrompt,
+                                                        onValueChange = { imageAnalysisPrompt = it },
+                                                        placeholder = { Text("What information do you want to extract from image?", color = Color.DarkGray) },
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                    Spacer(Modifier.height(8.dp))
+                                                    Button(
+                                                        onClick = { viewModel.analyzeImageContent(imageAnalysisPrompt) },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = neonPurple),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text("Analyze Image content (using 3.1-Pro)")
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (isImageAnalyzing) {
+                                            item {
+                                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                                    CircularProgressIndicator(color = neonPurple)
+                                                }
+                                            }
+                                        }
+
+                                        if (analyzedResult.isNotBlank()) {
+                                            item {
+                                                Card(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+                                                ) {
+                                                    Column(modifier = Modifier.padding(12.dp)) {
+                                                        Text("Media Analysis Output", color = neonPurple, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                        Spacer(Modifier.height(4.dp))
+                                                        Text(analyzedResult, color = Color.White, fontSize = 12.sp)
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // ORIGINAL PDF DOC SUMMARIZER
                                         item {
                                             Card(
                                                 modifier = Modifier.fillMaxWidth(),
@@ -897,51 +1237,6 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                                         Text("Document Insights Summary", fontWeight = FontWeight.Bold, color = neonCyan, fontSize = 13.sp)
                                                         Spacer(Modifier.height(8.dp))
                                                         Text(documentSummary, color = Color.White, fontSize = 13.sp, lineHeight = 20.sp)
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        item {
-                                            Card(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = CardDefaults.cardColors(containerColor = Color(0x3394A3B8)),
-                                                border = BorderStroke(1.dp, glassBorder)
-                                            ) {
-                                                Column(modifier = Modifier.padding(14.dp)) {
-                                                    Text("AI Meeting Transcript", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
-                                                    Text("အသံဖမ်းယူ၍ စာသားဖြင့် မှတ်တမ်းအပြည့်အစုံထုတ်ခြင်း", color = Color.LightGray, fontSize = 11.sp)
-                                                    Spacer(Modifier.height(10.dp))
-                                                    Button(
-                                                        onClick = { viewModel.startMeetingTranscript() },
-                                                        colors = ButtonDefaults.buttonColors(containerColor = neonPurple),
-                                                        modifier = Modifier.fillMaxWidth()
-                                                    ) {
-                                                        Text("Transcribe Live Meeting (စတင် မှတ်တမ်းတင်ရန်)", fontWeight = FontWeight.Bold)
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if (isTranscriptLoading) {
-                                            item {
-                                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                                    CircularProgressIndicator(color = neonPurple)
-                                                }
-                                            }
-                                        }
-
-                                        if (meetingTranscript.isNotBlank()) {
-                                            item {
-                                                Card(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
-                                                    border = BorderStroke(1.dp, neonPurple.copy(alpha = 0.5f))
-                                                ) {
-                                                    Column(modifier = Modifier.padding(14.dp)) {
-                                                        Text("Generated Meeting Transcript", fontWeight = FontWeight.Bold, color = neonPurple, fontSize = 13.sp)
-                                                        Spacer(Modifier.height(8.dp))
-                                                        Text(meetingTranscript, color = Color.White, fontSize = 13.sp, lineHeight = 20.sp, fontFamily = FontFamily.Monospace)
                                                     }
                                                 }
                                             }
@@ -1311,7 +1606,7 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     fontSize = 18.sp
-                                )
+                               )
                                 Text(
                                     "ဒေတာဘေ့စ်ရှိ သုံးသပ်ချက်နှင့် ပြင်ဆင်ချက်များ",
                                     color = Color.LightGray,
@@ -1366,7 +1661,7 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                             LazyColumn(
                                 modifier = Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
-                             ) {
+                            ) {
                                 items(feedbacks) { item ->
                                     FeedbackCard(item = item, onDelete = { viewModel.deleteFeedback(item.id) })
                                 }
@@ -1401,7 +1696,7 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                             GuideCard(
                                 title = "STT (Speech-to-Text)",
                                 description = "အသံလှိုင်းများကို စာသားအဖြစ် ပြောင်းလဲခြင်း",
-                                details = "Model: Whisper-Tiny (Fine-tuned on Burmese)\nFormat: TensorFlow Lite (FP16/INT8 Quantized)\nProcessing: Offline inference via TFLite runtime C++ dynamic engine wrapper."
+                                details = "Model: Whisper-Tiny (Fine-tuned on Burmese)\nFormat: TensorFlow Lite (FP16/INT8 Quantized)\nProcessing: Offline inference via TFLite runtime C++ wrapper."
                             )
                         }
                         item {
@@ -1425,14 +1720,119 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                 details = "Model: MicroSpeech CNN keyword spotter (110 KB)\nFormat: TensorFlow Lite Micro (Continuous audio circular buffer pooling)\nKeyword: \"Hey Bro\" (Hello Assistant)."
                             )
                         }
+
+                        // 🚀 User's Gemini Live Clone Build Roadmap
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                "🚀 Gemini Live Clone Build Roadmap",
+                                fontWeight = FontWeight.Bold,
+                                color = neonPurple,
+                                fontSize = 18.sp
+                            )
+                            Text(
+                                "Gemini Live ကဲ့သို့ အဆင့်မြင့် AI Voice Assistant ကို အခြေခံမှ Production Level အထိ တည်ဆောက်နိုင်မည့် ပြည့်စုံသော လမ်းညွှန်",
+                                color = Color.LightGray,
+                                fontSize = 12.sp
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
+                        }
+
+                        // Project Structure Card
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0x1A8B5CF6)),
+                                border = BorderStroke(1.dp, neonPurple.copy(alpha = 0.3f))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        "📂 Production Architecture Layout",
+                                        fontWeight = FontWeight.Bold,
+                                        color = neonPurple,
+                                        fontSize = 13.sp
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = "Gemini-Live-Clone/\n" +
+                                                "├── app/\n" +
+                                                "│   ├── ui/ (Screens, Theme, Navigation)\n" +
+                                                "│   ├── ai/ (Prompt, Reasoning, Memory, Tools, Model)\n" +
+                                                "│   ├── voice/ (STT, TTS, Wakeword, Streaming, Audio)\n" +
+                                                "│   ├── vision/ (Camera, OCR, Object Detection)\n" +
+                                                "│   ├── database/ (Room DB, SharedPreferences)\n" +
+                                                "│   └── settings/ (User Preferences, API Keys)\n" +
+                                                "└── backend/\n" +
+                                                "    ├── api/ & websocket/ (Realtime Audio Socket)\n" +
+                                                "    └── vector-db/ (Long-term RAG semantic memory)",
+                                        color = Color(0xFFE0E7FF),
+                                        fontSize = 10.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        lineHeight = 14.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        val phases = listOf(
+                            Triple("📚 Phase 1 — Foundation", "Android Studio, Kotlin, Jetpack Compose, MVVM Architecture, Coroutines, Room Database, Retrofit, Dependency Injection (Hilt/Koin), Git/GitHub", Color(0xFF60A5FA)),
+                            Triple("🧠 Phase 2 — AI Brain (AI Engine)", "Speech -> Speech-To-Text -> Prompt Builder -> Gemini API -> Reasoning -> Response -> TTS. Includes Prompt Manager, Conversation Context, Token Manager, and Error Handling.", Color(0xFF34D399)),
+                            Triple("🧠 Phase 3 — Memory System", "Short Memory (Session active chat logs) and Long Memory (User profile DB storing User name, Favorite language, Custom commands, Preferences).", Color(0xFFFBBF24)),
+                            Triple("🎤 Phase 4 — Voice Pipeline", "Mic -> Noise Reduction -> VAD -> Wake Word -> Speech Recognition -> AI -> TTS -> Speaker. Features include Interrupt speaking and Low latency audio streaming.", Color(0xFFF87171)),
+                            Triple("👀 Phase 5 — Vision (Camera Live)", "Camera frame capture -> OCR / Object detection -> Image understanding -> Gemini Vision. Analyze documents, receipts, plants, or animals live.", Color(0xFFC084FC)),
+                            Triple("📄 Phase 6 — Files Analyzer", "Support formats: PDF, DOCX, TXT, PPT, Excel, Images. Flow: Open file -> Extract text -> Gemini AI Analysis -> Voice synthesis summary.", Color(0xFF22D3EE)),
+                            Triple("🌐 Phase 7 — Browser Agent", "Live Web search grounding, Scrapers & RAG (Retrieval-Augmented Generation) to read online news, weather, or real-time topics.", Color(0xFFFB7185)),
+                            Triple("🔌 Phase 8 — Tool Calling", "AI Tool Router: Automatically translate natural language into function calls for Google Calendar, Maps, Weather, Phone, and Alarms.", Color(0xFF818CF8)),
+                            Triple("📱 Phase 9 — Android OS Control", "Voice Commands to trigger physical system actions: call, SMS, open apps, toggle flashlight, Bluetooth, Wi-Fi, volume, brightness, and screenshot.", Color(0xFF34D399)),
+                            Triple("🌍 Phase 10 — Live Conversation", "Bidirectional low-latency audio streaming channel (using WebSockets or gRPC) for hands-free voice chats like real phone conversations.", Color(0xFF60A5FA)),
+                            Triple("🔒 Phase 11 — Security & Privacy", "API Key Protection, Local Data Encryption, Secure Storage (EncryptedSharedPreferences), Biometric authentication.", Color(0xFFF87171)),
+                            Triple("☁️ Phase 12 — Cloud Sync", "Firebase / Google Drive synchronization for cross-device conversation histories, user settings, and personalized memories.", Color(0xFFC084FC)),
+                            Triple("🤖 Phase 13 — Automation Tasks", "Voice automation loops (e.g. \"မနက် ၆ နာရီ Alarm ဖွင့်ပေးပြီး ရာသီဥတုသတင်း ဖတ်ပြပါ\") automatically scheduled via Voice Intent.", Color(0xFF22D3EE)),
+                            Triple("🧩 Phase 14 — Plugin System", "Integration plugins for third-party services: Gmail, Google Calendar, YouTube, Google Maps, Spotify, and Translate APIs.", Color(0xFFFB7185)),
+                            Triple("🧠 Phase 15 — Local AI (Offline SLM)", "Offline Voice Assistant: local Whisper STT, Gemma 2B (On-device LLM via MediaPipe GenAI SDK), and local Sherpa-ONNX TTS.", Color(0xFF818CF8))
+                        )
+
+                        phases.forEach { (title, desc, color) ->
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                                    border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(
+                                            text = title,
+                                            fontWeight = FontWeight.Bold,
+                                            color = color,
+                                            fontSize = 13.sp
+                                        )
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            text = desc,
+                                            color = Color.White,
+                                            fontSize = 11.sp,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 3 -> {
-                    // TAB 3: Custom Voice Command Mappings Configuration Settings
+                    // TAB 3: Custom Voice Command Mappings & FIREBASE AUTH SECURE SYNC
                     val voiceMappings by viewModel.voiceMappings.collectAsStateWithLifecycle()
+                    val savedApiKey by viewModel.geminiApiKey.collectAsStateWithLifecycle()
+                    var apiKeyInput by remember(savedApiKey) { mutableStateOf(savedApiKey) }
                     var newPhrase by remember { mutableStateOf("") }
                     var selectedIntent by remember { mutableStateOf(IntentType.TOGGLE_DARK_MODE) }
                     var dropdownExpanded by remember { mutableStateOf(false) }
+
+                    // Firebase states
+                    val fbUserEmail by viewModel.firebaseUserEmail.collectAsStateWithLifecycle()
+                    val isFbLoading by viewModel.isFirebaseLoading.collectAsStateWithLifecycle()
+                    val syncStatus by viewModel.firestoreSyncStatus.collectAsStateWithLifecycle()
 
                     LazyColumn(
                         modifier = Modifier
@@ -1442,15 +1842,252 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                     ) {
                         item {
                             Text(
-                                "Custom Voice Commands (စိတ်ကြိုက် အမိန့်ပေးစနစ်များ)",
+                                "R's AI Settings & Security",
                                 fontWeight = FontWeight.Bold,
                                 color = neonCyan,
                                 fontSize = 18.sp
                             )
                             Text(
-                                "ကိုယ်ပိုင် Burmese voice commands များကို သတ်မှတ်ပြီး ဖုန်းလုပ်ဆောင်ချက်များနှင့် ချိတ်ဆက်သိမ်းဆည်းပါ (Settings survive across sessions via SharedPreferences)",
+                                "စိတ်ကြိုက် ဆက်တင်များနှင့် အမိန့်ပေးစနစ်များကို ဤနေရာတွင် စီမံခန့်ခွဲနိုင်ပါသည်ခင်ဗျာ။",
                                 color = Color.White,
                                 fontSize = 12.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
+                        }
+
+                        // FIREBASE CLOUD SYNC CARD
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0x331E1B4B)),
+                                border = BorderStroke(1.dp, neonPurple.copy(alpha = 0.5f))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.CloudSync, "Sync", tint = neonPurple)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Firebase Authentication & Sync", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                    Text("Back up your voice command profiles, personal settings, and conversational learning history to Firestore securely.", color = Color.LightGray, fontSize = 11.sp)
+                                    Spacer(Modifier.height(12.dp))
+
+                                    if (isFbLoading) {
+                                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                            CircularProgressIndicator(color = neonPurple)
+                                        }
+                                    } else {
+                                        if (fbUserEmail == null) {
+                                            var emailInput by remember { mutableStateOf("") }
+                                            OutlinedTextField(
+                                                value = emailInput,
+                                                onValueChange = { emailInput = it },
+                                                label = { Text("Google Email account", color = Color.Gray) },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            Spacer(Modifier.height(8.dp))
+                                            Button(
+                                                onClick = { if (emailInput.isNotBlank()) viewModel.firebaseSignIn(emailInput) },
+                                                colors = ButtonDefaults.buttonColors(containerColor = neonPurple),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text("Sign In with Google Account")
+                                            }
+                                        } else {
+                                            Column {
+                                                Text("Logged in as: $fbUserEmail", color = neonCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                Text("Status: $syncStatus", color = Color.LightGray, fontSize = 11.sp)
+                                                Spacer(Modifier.height(10.dp))
+                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    Button(
+                                                        onClick = { viewModel.syncToFirestore() },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = neonCyan),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text("Sync Now", fontSize = 11.sp)
+                                                    }
+                                                    Button(
+                                                        onClick = { viewModel.firebaseSignOut() },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text("Sign Out", fontSize = 11.sp)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Gemini API Key Config Card
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0x3306B6D4)),
+                                border = BorderStroke(1.dp, neonCyan.copy(alpha = 0.5f))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        "Gemini AI API Key (အွန်လိုင်း အသိဉာဏ်တု)",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        fontSize = 14.sp
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        "အွန်လိုင်းမှတဆင့် Gemini AI ကဲ့သို့ ပိုမိုစမတ်ကျစွာ တုန့်ပြန်နိုင်ရန် သင်၏ Gemini API Key ကို ဤနေရာတွင် ထည့်သွင်းပါခင်ဗျာ။ API key မရှိပါက simulated model ဖြင့် ဖြေကြားပေးပါမည်။",
+                                        color = Color.LightGray,
+                                        fontSize = 11.sp,
+                                        lineHeight = 16.sp
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+
+                                    OutlinedTextField(
+                                        value = apiKeyInput,
+                                        onValueChange = { apiKeyInput = it },
+                                        label = { Text("Gemini API Key", color = Color.Gray) },
+                                        placeholder = { Text("AIzaSy...", color = Color.DarkGray) },
+                                        singleLine = true,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("gemini_api_key_input"),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = neonCyan,
+                                            unfocusedBorderColor = Color.Gray,
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                        )
+                                    )
+
+                                    Spacer(Modifier.height(12.dp))
+
+                                    Button(
+                                        onClick = {
+                                            viewModel.saveGeminiApiKey(apiKeyInput)
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("save_api_key_button"),
+                                        colors = ButtonDefaults.buttonColors(containerColor = neonCyan)
+                                    ) {
+                                        Icon(Icons.Default.Save, "Save API Key", tint = Color.Black)
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("API Key သိမ်းဆည်းရန် (Save API Key)", fontWeight = FontWeight.Bold, color = Color.Black)
+                                    }
+                                }
+                            }
+                        }
+
+                        // UI Accessibility Service Settings Card
+                        item {
+                            val isServiceActive = com.example.service.AssistantAccessibilityService.isServiceRunning
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0x22EC4899)),
+                                border = BorderStroke(1.dp, neonPink.copy(alpha = 0.5f))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.Visibility, "Screen content", tint = neonPink)
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(
+                                                "UI Accessibility (မျက်နှာပြင်နှင့် အဝေးထိန်း)",
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White,
+                                                fontSize = 14.sp
+                                            )
+                                        }
+                                        
+                                        // Status badge
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(if (isServiceActive) Color(0xFF10B981) else Color(0xFFEF4444))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                if (isServiceActive) "ACTIVE" else "INACTIVE",
+                                                color = Color.White,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        "ယခုစနစ်သည် အက်စစ်စတန့်အား သင့်ဖုန်းမျက်နှာပြင်မှ စာသားများကို ဖတ်ရှုနားလည်စေရန်နှင့် သင့်ကိုယ်စား ခလုတ်နှိပ်ခြင်း၊ စာရိုက်ခြင်း စသည့် အဝေးထိန်းလုပ်ဆောင်ချက်များကို လုပ်ဆောင်ပေးနိုင်ရန် ကူညီပေးပါသည်ခင်ဗျာ။",
+                                        color = Color.LightGray,
+                                        fontSize = 11.sp,
+                                        lineHeight = 16.sp
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                try {
+                                                    val intent = android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                                                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                    }
+                                                    context.startActivity(intent)
+                                                    android.widget.Toast.makeText(context, "Accessibility settings opened. Locate \"R's AI\" to activate.", android.widget.Toast.LENGTH_LONG).show()
+                                                } catch (e: Exception) {
+                                                    android.widget.Toast.makeText(context, "Error opening settings", android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = neonPink),
+                                            modifier = Modifier.weight(1.5f)
+                                        ) {
+                                            Icon(Icons.Default.Settings, "Configure", tint = Color.White, modifier = Modifier.size(16.dp))
+                                            Spacer(Modifier.width(6.dp))
+                                            Text("ခွင့်ပြုချက်ပေးရန်", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                if (isServiceActive) {
+                                                    val service = com.example.service.AssistantAccessibilityService.instance
+                                                    val summary = service?.getScreenTextSummary() ?: "No active nodes detected."
+                                                    android.widget.Toast.makeText(context, "မျက်နှာပြင်ဖတ်မှု:\n${summary.take(200)}...", android.widget.Toast.LENGTH_LONG).show()
+                                                } else {
+                                                    android.widget.Toast.makeText(context, "မျက်နှာပြင်ဖတ်စနစ် စမ်းသပ်ရန် ပထမဦးစွာ ခွင့်ပြုချက်ပေးပါခင်ဗျာ။", android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(Icons.Default.PlayArrow, "Test", tint = Color.White, modifier = Modifier.size(16.dp))
+                                            Spacer(Modifier.width(4.dp))
+                                            Text("စမ်းသပ်ရန်", fontSize = 11.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        item {
+                            Text(
+                                "Custom Voice Commands (စိတ်ကြိုက် အမိန့်ပေးစနစ်များ)",
+                                fontWeight = FontWeight.Bold,
+                                color = neonCyan,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                "ကိုယ်ပိုင် Burmese voice commands များကို သတ်မှတ်ပြီး ဖုန်းလုပ်ဆောင်ချက်များနှင့် ချိတ်ဆက်သိမ်းဆည်းပါ",
+                                color = Color.LightGray,
+                                fontSize = 11.sp
                             )
                             Spacer(Modifier.height(4.dp))
                             HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
@@ -1472,14 +2109,15 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                     )
                                     Spacer(Modifier.height(12.dp))
 
-                                    // Input for trigger phrase
                                     OutlinedTextField(
                                         value = newPhrase,
                                         onValueChange = { newPhrase = it },
                                         label = { Text("ပြောမည့် စကားစု (e.g. အိပ်ချင်ပြီ)", color = Color.Gray) },
                                         placeholder = { Text("အမိန့်ပေး စကားလုံး ရေးပါ...", color = Color.DarkGray) },
                                         singleLine = true,
-                                        modifier = Modifier.fillMaxWidth().testTag("custom_phrase_input"),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("custom_phrase_input"),
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedBorderColor = neonCyan,
                                             unfocusedBorderColor = Color.Gray,
@@ -1490,11 +2128,12 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
 
                                     Spacer(Modifier.height(12.dp))
 
-                                    // Dropdown for target IntentType
                                     Box(modifier = Modifier.fillMaxWidth()) {
                                         OutlinedButton(
                                             onClick = { dropdownExpanded = true },
-                                            modifier = Modifier.fillMaxWidth().testTag("intent_dropdown_trigger"),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .testTag("intent_dropdown_trigger"),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
                                         ) {
                                             Row(
@@ -1510,7 +2149,9 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                         DropdownMenu(
                                             expanded = dropdownExpanded,
                                             onDismissRequest = { dropdownExpanded = false },
-                                            modifier = Modifier.background(Color(0xFF1E293B)).width(300.dp)
+                                            modifier = Modifier
+                                                .background(Color(0xFF1E293B))
+                                                .width(300.dp)
                                         ) {
                                             val validIntents = listOf(
                                                 IntentType.TOGGLE_DARK_MODE,
@@ -1549,7 +2190,9 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                                                 newPhrase = ""
                                             }
                                         },
-                                        modifier = Modifier.fillMaxWidth().testTag("save_mapping_button"),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("save_mapping_button"),
                                         colors = ButtonDefaults.buttonColors(containerColor = neonCyan)
                                     ) {
                                         Icon(Icons.Default.Add, "Add")
@@ -1560,7 +2203,6 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                             }
                         }
 
-                        // Saved mappings list header
                         item {
                             Text(
                                 "လက်ရှိ သိမ်းဆည်းထားသော အမိန့်များ (Saved voice mappings)",
@@ -1584,7 +2226,9 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                         } else {
                             items(voiceMappings.toList()) { (phrase, intent) ->
                                 Card(
-                                    modifier = Modifier.fillMaxWidth().testTag("mapping_item_${phrase}"),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("mapping_item_${phrase}"),
                                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
                                 ) {
                                     Row(
@@ -1651,10 +2295,73 @@ fun AssistantScreen(viewModel: AssistantViewModel, modifier: Modifier = Modifier
                     }
                 }
             }
+
+            // GEMINI LIVE LOW-LATENCY FULL-SCREEN CALL OVERLAY
+            val isVoiceCallActive by viewModel.isVoiceCallActive.collectAsStateWithLifecycle()
+            val voiceCallState by viewModel.voiceCallState.collectAsStateWithLifecycle()
+
+            if (isVoiceCallActive) {
+                Dialog(onDismissRequest = { viewModel.stopVoiceCall() }) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF030712)),
+                        border = BorderStroke(2.dp, neonCyan),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF10B981))
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Gemini Live Call", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                }
+                                Spacer(Modifier.height(6.dp))
+                                Text(voiceCallState, color = Color.LightGray, fontSize = 12.sp)
+                            }
+
+                            // Rotating Voice Waveform graphic
+                            Box(
+                                modifier = Modifier
+                                    .size(150.dp)
+                                    .clip(CircleShape)
+                                    .border(1.5.dp, neonCyan, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                VoiceWaveform(color = neonCyan)
+                            }
+
+                            Button(
+                                onClick = { viewModel.stopVoiceCall() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(24.dp)
+                            ) {
+                                Icon(Icons.Default.CallEnd, "Hang up", tint = Color.White)
+                                Spacer(Modifier.width(8.dp))
+                                Text("End Session", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-
-
 }
 
 @Composable

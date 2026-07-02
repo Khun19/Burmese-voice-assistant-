@@ -12,12 +12,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.ui.AssistantScreen
 import com.example.ui.AssistantViewModel
 import com.example.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
+
+  private lateinit var viewModel: AssistantViewModel
 
   private val REQUIRED_PERMISSIONS = arrayOf(
     Manifest.permission.RECORD_AUDIO,
@@ -28,6 +30,9 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
+    // Retrieve ViewModel on startup so we can interact with it across lifecycle/callbacks
+    viewModel = ViewModelProvider(this)[AssistantViewModel::class.java]
+
     // Request necessary permissions on startup
     if (!hasRequiredPermissions()) {
       ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE)
@@ -37,11 +42,26 @@ class MainActivity : ComponentActivity() {
     setContent {
       MyApplicationTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-          val viewModel: AssistantViewModel = viewModel()
           AssistantScreen(
             viewModel = viewModel,
             modifier = Modifier.padding(innerPadding)
           )
+        }
+      }
+    }
+  }
+
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<String>,
+    grantResults: IntArray
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (requestCode == PERMISSIONS_REQUEST_CODE) {
+      val recordAudioIndex = permissions.indexOf(Manifest.permission.RECORD_AUDIO)
+      if (recordAudioIndex != -1 && grantResults.getOrNull(recordAudioIndex) == PackageManager.PERMISSION_GRANTED) {
+        if (::viewModel.isInitialized) {
+          viewModel.onPermissionsGranted()
         }
       }
     }
