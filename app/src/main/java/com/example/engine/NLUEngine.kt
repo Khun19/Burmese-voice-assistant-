@@ -109,13 +109,13 @@ class NLUEngine {
                     IntentType.MUTE_VOLUME -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အသံပိတ်ပေးလိုက်ပါပြီခင်ဗျာ။"
                     IntentType.TOGGLE_FLASHLIGHT -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဓာတ်မီးကို ပြောင်းလဲပေးလိုက်ပါပြီခင်ဗျာ။"
                     IntentType.TOGGLE_DARK_MODE -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အမှောင်စနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.TOGGLE_POWER_SAVING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပါဝါချွေတာရေးစနစ်ကို ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.TOGGLE_DND -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အနှောင့်အယှက်မပေးရစနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.TAKE_SCREENSHOT -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဖုန်းမျက်နှာပြင်ကို ဓာတ်ပုံရိုက်ကူးလိုက်ပါပြီခင်ဗျာ။"
-                    IntentType.CHECK_BATTERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဘက်ထရီအခြေအနေကို စစ်ဆေးပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.CHECK_DIAGNOSTICS -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း သိုလှောင်မှုစစ်ဆေးပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.OPEN_GALLERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပြခန်းကို ဖွင့်လှစ်ပေးနေပါသည်ခင်ဗျာ။"
-                    IntentType.START_SCREEN_RECORDING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း မျက်နှာပြင်ဗီဒီယိုမှတ်တမ်းတင်ခြင်းကို စတင်လိုက်ပါပြီခင်ဗျာ။"
+                    IntentType.TOGGLE_POWER_SAVING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပါဝါချွေတာရေးစနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.TOGGLE_DND -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း အန���ောင့်အယှက်မပေးရစနစ်ကို လုပ်ဆောင်ပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.TAKE_SCREENSHOT -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဖုန်းမျက်နှာပြင်ကိုတွေ့မြင်ကူးယူပေးနေပါသည်ခင်ဗျာ။"
+                    IntentType.CHECK_BATTERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ဘက်ထရီအခြေအနေကို စစ်ဆေးပေးလိုက်ပါပြီခင်ဗျာ။"
+                    IntentType.CHECK_DIAGNOSTICS -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း သိုလှောင်မှုနှင့်သတ်မှတ်မှုတစ်ခြိုးကိုစစ်ဆေးပေးလိုက်ပါပြီခင်ဗျာ။"
+                    IntentType.OPEN_GALLERY -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း ပြခန်းကို ဖွင့်လှစ်ပေးလိုက်ပါပြီခင်ဗျာ။"
+                    IntentType.START_SCREEN_RECORDING -> "စိတ်ကြိုက်သတ်မှတ်ထားသည့်အတိုင်း မျက်နှာပြင်ဗီဒီယိုကွင်းဆင်းပေးလိုက်ပါပြီခင်ဗျာ။"
                     else -> "စိတ်ကြိုက်အမိန့်ပေးချက် '${phrase}' အရ ဆောင်ရွက်ပေးနေပါသည်ခင်ဗျာ။"
                 }
                 return NLUResult(
@@ -182,7 +182,7 @@ class NLUEngine {
                         intent = IntentType.MUTE_VOLUME,
                         slots = emptyMap(),
                         confidence = 0.98f,
-                        generatedResponseMy = "ဖုန်းအသံကို ပိတ်ပြီး ငြိမ်သက်စေလိုက်ပါပြီခင်ဗျာ။ (Silent Mode)"
+                        generatedResponseMy = "ဖုန်းအသံကို ပိတ်ပြီး ငြိမ်သက်စေလိုက်ပါပြီခင်ဗျာ။ (Silent Mode အတွက်)"
                     )
                 }
                 else -> NLUResult(
@@ -254,7 +254,7 @@ class NLUEngine {
                 intent = IntentType.ADD_REMINDER,
                 slots = mapOf("detail" to detail),
                 confidence = 0.92f,
-                generatedResponseMy = "အော့ဖ်လိုင်း သတိပေးချက် စနစ်တွင် \"$detail\" ကို သတိပေးချက်အဖြစ် သတ်မှတ်လိုက်ပါပြီခင်ဗျာ။"
+                generatedResponseMy = "အော့ဖ်လိုင်း သတိပေးချက် စနစ်တွင် \"$detail\" ကို သတိပေးချက်အဖြစ် သိမ်းဆည်းပေးနေပါသည်ခင်ဗျာ။"
             )
         }
 
@@ -299,12 +299,12 @@ class NLUEngine {
 
         // 13. Creative Writing
         if (trimmed.contains("ကဗျာ") || trimmed.contains("ပုံပြင်") || trimmed.contains("စာရေး")) {
-            val poem = "ပန်းကလေးများ လန်းဆန်းစေ၊ လေပြည်ညှင်းလည်း တိုက်ခတ်စေ။ မြန်မာပြည်ဝယ် အစဉ်အေးမြ၊ သာယာဝပြော ငြိမ်းချမ်းကြ။"
+            val poem = "ပန်းကလေးများ လန်းဆန်းစေ၊ လေပြည်ညှင်းလည်း တိုက်ခတ်စေ။ မြန်မာပြည်သည် ရေပြည်ကျွန်း ရီမုံလည်း ရှုံးပြီဝဦး။"
             return NLUResult(
                 intent = IntentType.CREATIVE_WRITING,
                 slots = emptyMap(),
                 confidence = 0.90f,
-                generatedResponseMy = "မြန်မာစာပေ အော့ဖ်လိုင်းမော်ဒယ်မှ ထုတ်လုပ်ပေးသော ကဗျာတိုလေး ဖြစ်ပါသည်ခင်ဗျာ -\n\n\"$poem\""
+                generatedResponseMy = "မြန်မာစာပေ အော့ဖ်လိုင်းမော်ဒယ်မှ ထုတ်လုပ်ပေးသော ကဗျာတို့ကို ကြားနုံးပေးနေပါသည်ခင်ဗျာ။ $poem"
             )
         }
 
@@ -360,12 +360,12 @@ class NLUEngine {
             return NLUResult(
                 intent = IntentType.TOGGLE_DARK_MODE,
                 slots = mapOf("state" to if (isOn) "on" else "off"),
-                confidence = 0.95f,
-                generatedResponseMy = if (isOn) "အမှောင်စနစ် (Dark Mode) ဆက်တင်သို့ ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။" else "လင်းထိန်သောစနစ် (Light Mode) ဆက်တင်သို့ ကူးပြောင်းပေးနေပါသည်ခင်ဗျာ။"
+                confidence = 0.96f,
+                generatedResponseMy = if (isOn) "အမှောင်စနစ် (Dark Mode) ကို ဖွင့်လိုက်ပါပြီခင်ဗျာ။" else "အမှောင်စနစ်ကို ပိတ်လိုက်ပါပြီခင်ဗျာ။"
             )
         }
 
-        if (trimmed.contains("စွမ်းအင်") || trimmed.contains("power saving") || trimmed.contains("powersaving")) {
+        if (trimmed.contains("ပါဝါချွေတာ") || trimmed.contains("power saving")) {
             val isOn = !trimmed.contains("ပိတ်")
             return NLUResult(
                 intent = IntentType.TOGGLE_POWER_SAVING,

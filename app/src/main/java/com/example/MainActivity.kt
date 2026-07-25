@@ -12,7 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.AssistantScreen
 import com.example.ui.AssistantViewModel
 import com.example.ui.theme.MyApplicationTheme
